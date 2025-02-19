@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextInput, TextInputProps, View, StyleSheet, useColorScheme } from 'react-native';
-import { ThemedText } from '../components/ThemedText';
+import { ThemedText } from './ThemedText';
 
 export interface ThemedInputProps extends Omit<TextInputProps, 'style'> {
   label?: string;

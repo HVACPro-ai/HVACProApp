@@ -1,31 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { ThemedView } from '../components/ThemedView';
-import { ThemedText } from '../components/ThemedText';
-import { ThemedInput } from '../components/ThemedInput';
-import { ThemedButton } from '../components/ThemedButton';
+import {
+  ThemedView,
+  ThemedText,
+  ThemedInput,
+  ThemedButton
+} from '../components';
 import { ImageUploader } from '../components/dashboard/ImageUploader';
 import { StepProgress } from '../components/diagnostics/StepProgress';
-import { SensorDataInput } from '../components/diagnostics/SensorDataInput';
+import { SensorDataInput, SensorData } from '../components/diagnostics/SensorDataInput';
 import { AIAnalysisResults } from '../components/diagnostics/AIAnalysisResults';
 import { DiagnosticGuide } from '../components/diagnostics/DiagnosticGuide';
 import { fetchDiagnostics, analyzeEquipmentImages, getEfficiencyOptimizations } from '../api/diagnosticsApi';
 import { Ionicons } from '@expo/vector-icons';
-import type { ServiceImage } from '../types';
-
-interface DiagnosticState {
-  modelNumber: string;
-  serialNumber: string;
-  symptoms: string[];
-  images: string[];
-  sensorData?: {
-    temperature: number;
-    pressure: number;
-    humidity: number;
-    airflow: number;
-    powerConsumption: number;
-  };
-}
+import type { ServiceImage, DiagnosticState } from '../types';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const DIAGNOSTIC_STEPS = [
   'Equipment Info',
@@ -34,7 +23,11 @@ const DIAGNOSTIC_STEPS = [
   'AI Analysis'
 ];
 
-export default function DiagnosticsScreen({ navigation }) {
+interface DiagnosticsScreenProps {
+  navigation: NativeStackNavigationProp<any>;
+}
+
+export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [diagnosticData, setDiagnosticData] = useState<DiagnosticState>({
@@ -42,6 +35,13 @@ export default function DiagnosticsScreen({ navigation }) {
     serialNumber: '',
     symptoms: [],
     images: [],
+    sensorData: {
+      temperature: 0,
+      pressure: 0,
+      humidity: 0,
+      airflow: 0,
+      powerConsumption: 0,
+    },
   });
   const [results, setResults] = useState<any>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -105,38 +105,37 @@ export default function DiagnosticsScreen({ navigation }) {
     setIsValid(valid);
   };
 
-  const handleImageUpload = async (imageUri: string) => {
-    try {
-      setLoading(true);
-      // Add image size validation
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
-      if (blob.size > 5000000) { // 5MB limit
-        throw new Error('Image size must be less than 5MB');
-      }
-
-      setDiagnosticData(prev => ({
-        ...prev,
-        images: [...prev.images, imageUri]
-      }));
-    } catch (error) {
-      Alert.alert('Error', error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleImageDelete = (index: number) => {
-    setDiagnosticData(prev => ({
+  const handleImageUpload = (image: ServiceImage) => {
+    setDiagnosticData((prev: DiagnosticState) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: [...prev.images, image]
     }));
   };
 
-  const handleSensorData = (data: DiagnosticState['sensorData']) => {
+  const handleSymptomChange = (text: string) => {
+    setDiagnosticData((prev: DiagnosticState) => ({
+      ...prev,
+      symptoms: text.split(',').map((_: string, i: number) => text.trim())
+    }));
+  };
+
+  const handleModelNumberChange = (text: string) => {
+    setDiagnosticData((prev: DiagnosticState) => ({
+      ...prev,
+      modelNumber: text
+    }));
+  };
+
+  const handleSensorData = (data: Partial<SensorData>) => {
     setDiagnosticData(prev => ({
       ...prev,
-      sensorData: data
+      sensorData: {
+        temperature: data.temperature ?? 0,
+        pressure: data.pressure ?? 0,
+        humidity: data.humidity ?? 0,
+        airflow: data.airflow ?? 0,
+        powerConsumption: data.powerConsumption ?? 0,
+      }
     }));
   };
 
@@ -180,11 +179,7 @@ export default function DiagnosticsScreen({ navigation }) {
       });
       setStep(4); // Move to results step
     } catch (error) {
-      console.error('Diagnostic error:', error);
-      Alert.alert(
-        'Error',
-        'Failed to complete diagnostic analysis. Please try again.'
-      );
+      handleError(error);
     } finally {
       setLoading(false);
     }
@@ -208,6 +203,18 @@ export default function DiagnosticsScreen({ navigation }) {
     setHasSeenGuide(prev => [...new Set([...prev, step])]);
   };
 
+  const handleError = (error: unknown) => {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    Alert.alert('Error', errorMessage);
+  };
+
+  const removeImage = (uri: string, index: number) => {
+    setDiagnosticData((prev: DiagnosticState) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -217,10 +224,7 @@ export default function DiagnosticsScreen({ navigation }) {
             <ThemedInput
               placeholder="Model Number"
               value={diagnosticData.modelNumber}
-              onChangeText={(text) => setDiagnosticData(prev => ({
-                ...prev,
-                modelNumber: text
-              }))}
+              onChangeText={handleModelNumberChange}
             />
             <ThemedInput
               placeholder="Serial Number"
@@ -241,10 +245,7 @@ export default function DiagnosticsScreen({ navigation }) {
               placeholder="Enter symptoms"
               multiline
               numberOfLines={4}
-              onChangeText={(text) => setDiagnosticData(prev => ({
-                ...prev,
-                symptoms: text.split('\n').filter(s => s.trim())
-              }))}
+              onChangeText={handleSymptomChange}
             />
           </View>
         );
@@ -266,7 +267,7 @@ export default function DiagnosticsScreen({ navigation }) {
                   />
                   <TouchableOpacity 
                     style={styles.deleteButton}
-                    onPress={() => handleImageDelete(index)}
+                    onPress={() => removeImage(uri, index)}
                   >
                     <Ionicons name="close-circle" size={24} color="#FF3B30" />
                   </TouchableOpacity>

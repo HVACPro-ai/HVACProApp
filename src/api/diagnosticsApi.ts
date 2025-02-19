@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { ServiceImage } from '../types';
 
 const API_URL = 'https://your-backend-url.com/api'; // Replace with your backend URL
 
@@ -98,11 +99,9 @@ interface PredictiveAlert {
 }
 
 // Function to analyze equipment images
-export const analyzeEquipmentImages = async (
-  imageUrls: string[]
-): Promise<ImageAnalysisResult> => {
+export const analyzeEquipmentImages = async (images: ServiceImage[]): Promise<ImageAnalysisResult> => {
   const response = await axios.post(`${API_URL}/diagnostics/image-analysis`, {
-    imageUrls
+    imageUrls: images.map(image => image.uri)
   });
   return response.data;
 };

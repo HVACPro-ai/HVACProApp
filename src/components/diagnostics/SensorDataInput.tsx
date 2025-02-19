@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '../../components/ThemedText';
-import { ThemedInput } from '../../components/ThemedInput';
+import { ThemedText } from '../ThemedText';
+import { ThemedInput } from '../ThemedInput';
 import { Ionicons } from '@expo/vector-icons';
 
-interface SensorData {
+export interface SensorData {
   temperature: number;
   pressure: number;
   humidity: number;

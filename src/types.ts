@@ -9,4 +9,19 @@ export interface ThemedButtonProps {
   onPress: () => void;
   style?: any;
   disabled?: boolean;
+  loading?: boolean;
+}
+
+export interface DiagnosticState {
+  modelNumber: string;
+  serialNumber: string;
+  symptoms: string[];
+  images: ServiceImage[];
+  sensorData?: {
+    temperature: number;
+    pressure: number;
+    humidity: number;
+    airflow: number;
+    powerConsumption: number;
+  };
 } 
