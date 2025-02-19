@@ -1,189 +1,140 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Button, FlatList, Platform, Alert } from 'react-native';
-import { ThemedView } from '../../components/ThemedView';
-import { ThemedText } from '../../components/ThemedText';
-import { ThemedInput } from '../../components/ThemedInput';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import * as Notifications from 'expo-notifications';
-import { FontAwesome } from '@expo/vector-icons';
-import { SchedulableTriggerInputTypes } from 'expo-notifications';
-import { fetchServiceCalls, saveServiceCall } from '../../api/serviceCallsApi';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedInput } from '@/components/ThemedInput';
+import { ServiceCall, fetchServiceCalls } from '@/src/api/serviceCallsApi';
+import { fetchDiagnostics } from '@/src/api/diagnosticsApi';
+import { Ionicons } from '@expo/vector-icons';
 
-type ServiceCall = {
-  id: string;
-  customerName: string;
-  date: string;
-  time: string;
-  address: string;
-  phoneNumber: string;
-  description: string;
-  status: string;
-};
+type CallStatus = 'scheduled' | 'in-progress' | 'completed';
 
-export default function ServiceCallsScreen() {
-  const [serviceCalls, setServiceCalls] = useState<ServiceCall[]>([]);
-  const [customerName, setCustomerName] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState(new Date());
-  const [address, setAddress] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [description, setDescription] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+interface ServiceCallWithStatus extends ServiceCall {
+  status: CallStatus;
+  priority: 'high' | 'medium' | 'low';
+}
 
-  const handleSaveServiceCall = async () => {
-    try {
-      if (customerName.trim() && address.trim() && phoneNumber.trim()) {
-        const serviceCall: ServiceCall = {
-          id: Date.now().toString(),
-          customerName,
-          date: date.toLocaleDateString(),
-          time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          address,
-          phoneNumber,
-          description,
-          status: 'Pending'
-        };
+export default function ServiceCalls() {
+  const [serviceCalls, setServiceCalls] = useState<ServiceCallWithStatus[]>([]);
+  const [filterStatus, setFilterStatus] = useState<CallStatus | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-        // Create a notification trigger for the service call date
-        const notificationDate = new Date(date);
-        notificationDate.setHours(time.getHours());
-        notificationDate.setMinutes(time.getMinutes());
-
-        // Schedule notification
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: 'Service Call Reminder',
-            body: `Service call for ${customerName} at ${address}`,
-            data: { serviceCallId: serviceCall.id },
-          },
-          trigger: {
-            type: SchedulableTriggerInputTypes.DATE,
-            date: notificationDate,
-          },
-        });
-
-        setServiceCalls([...serviceCalls, serviceCall]);
-        // Clear form
-        setCustomerName('');
-        setDate(new Date());
-        setTime(new Date());
-        setAddress('');
-        setPhoneNumber('');
-        setDescription('');
-        Alert.alert('Success', 'Service call saved successfully!');
-      } else {
-        Alert.alert('Error', 'Please fill in all required fields');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to save service call');
-      console.error(error);
-    }
-  };
-
-  const handleDeleteServiceCall = (id: string) => {
-    setServiceCalls(serviceCalls.filter(call => call.id !== id));
-    Alert.alert('Success', 'Service call deleted successfully!');
-  };
+  useEffect(() => {
+    loadServiceCalls();
+  }, []);
 
   const loadServiceCalls = async () => {
-    const calls = await fetchServiceCalls();
-    setServiceCalls(calls);
-  };
-
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setDate(selectedDate);
+    try {
+      const calls = await fetchServiceCalls();
+      // Add mock status and priority for now
+      const callsWithStatus = calls.map(call => ({
+        ...call,
+        status: 'scheduled' as CallStatus,
+        priority: 'medium' as 'high' | 'medium' | 'low'
+      }));
+      setServiceCalls(callsWithStatus);
+    } catch (error) {
+      console.error('Error loading service calls:', error);
     }
   };
 
-  const onTimeChange = (event: any, selectedTime?: Date) => {
-    setShowTimePicker(false);
-    if (selectedTime) {
-      setTime(selectedTime);
+  const getStatusColor = (status: CallStatus) => {
+    switch (status) {
+      case 'scheduled': return '#007AFF';
+      case 'in-progress': return '#FF9500';
+      case 'completed': return '#34C759';
+      default: return '#8E8E93';
     }
   };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'alert-circle';
+      case 'medium': return 'alert';
+      case 'low': return 'information-circle';
+      default: return 'information-circle';
+    }
+  };
+
+  const filteredCalls = serviceCalls
+    .filter(call => filterStatus === 'all' || call.status === filterStatus)
+    .filter(call => 
+      call.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      call.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+  const renderServiceCall = (call: ServiceCallWithStatus) => (
+    <TouchableOpacity 
+      key={call.id} 
+      style={styles.callCard}
+      onPress={() => {/* Navigate to call details */}}
+    >
+      <View style={styles.callHeader}>
+        <View style={styles.customerInfo}>
+          <ThemedText style={styles.customerName}>{call.customerName}</ThemedText>
+          <ThemedText style={styles.date}>
+            {new Date(call.date).toLocaleDateString()}
+          </ThemedText>
+        </View>
+        <Ionicons 
+          name={getPriorityIcon(call.priority)} 
+          size={24} 
+          color={getStatusColor(call.status)}
+        />
+      </View>
+      
+      <ThemedText style={styles.address}>{call.address}</ThemedText>
+      <ThemedText style={styles.description}>{call.description}</ThemedText>
+      
+      <View style={styles.callFooter}>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(call.status) }]}>
+          <ThemedText style={styles.statusText}>
+            {call.status.charAt(0).toUpperCase() + call.status.slice(1)}
+          </ThemedText>
+        </View>
+        <ThemedText style={styles.phone}>{call.phoneNumber}</ThemedText>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.inputContainer}>
-        <ThemedInput
-          value={customerName}
-          onChangeText={setCustomerName}
-          placeholder="Customer Name"
-          style={styles.input}
-        />
-        
-        <Button 
-          title={date.toLocaleDateString()} 
-          onPress={() => setShowDatePicker(true)} 
-        />
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            onChange={onDateChange}
-          />
-        )}
-
-        <Button 
-          title={time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 
-          onPress={() => setShowTimePicker(true)} 
-        />
-        {showTimePicker && (
-          <DateTimePicker
-            value={time}
-            mode="time"
-            onChange={onTimeChange}
-          />
-        )}
-
-        <ThemedInput
-          value={address}
-          onChangeText={setAddress}
-          placeholder="Address"
-          style={styles.input}
-        />
-
-        <ThemedInput
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-          placeholder="Phone Number"
-          keyboardType="phone-pad"
-          style={styles.input}
-        />
-
-        <ThemedInput
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Description"
-          multiline
-          numberOfLines={3}
-          style={[styles.input, styles.multilineInput]}
-        />
-
-        <Button
-          title="Add Service Call"
-          onPress={handleSaveServiceCall}
+      <View style={styles.header}>
+        <ThemedText style={styles.title}>Service Calls</ThemedText>
+        <ThemedButton 
+          title="New Call" 
+          onPress={() => {/* Navigate to new call form */}}
         />
       </View>
 
-      <FlatList
-        data={serviceCalls}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.callItem}>
-            <ThemedText style={styles.customerName}>{item.customerName}</ThemedText>
-            <ThemedText style={styles.date}>{item.date} at {item.time}</ThemedText>
-            <ThemedText style={styles.address}>{item.address}</ThemedText>
-            <ThemedText style={styles.phone}>{item.phoneNumber}</ThemedText>
-            <ThemedText style={styles.description}>{item.description}</ThemedText>
-            <ThemedText style={styles.status}>{item.status}</ThemedText>
-            <Button title="Delete" onPress={() => handleDeleteServiceCall(item.id)} />
-          </View>
-        )}
+      <ThemedInput
+        placeholder="Search calls..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        style={styles.searchInput}
       />
+
+      <View style={styles.filterContainer}>
+        {(['all', 'scheduled', 'in-progress', 'completed'] as const).map((status) => (
+          <TouchableOpacity
+            key={status}
+            style={[
+              styles.filterButton,
+              filterStatus === status && styles.filterButtonActive
+            ]}
+            onPress={() => setFilterStatus(status)}
+          >
+            <ThemedText style={styles.filterText}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </ThemedText>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <ScrollView style={styles.scrollView}>
+        {filteredCalls.map(renderServiceCall)}
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -193,21 +144,58 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  inputContainer: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
   },
-  input: {
-    marginBottom: 10,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
   },
-  multilineInput: {
-    height: 100,
-    textAlignVertical: 'top',
+  searchInput: {
+    marginBottom: 15,
   },
-  callItem: {
+  filterContainer: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    borderRadius: 15,
+    backgroundColor: '#f0f0f0',
+  },
+  filterButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  filterText: {
+    fontSize: 14,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  callCard: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
     padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  callHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 10,
+  },
+  customerInfo: {
+    flex: 1,
   },
   customerName: {
     fontSize: 18,
@@ -215,23 +203,34 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 14,
-    marginTop: 5,
+    color: '#666',
   },
   address: {
-    fontSize: 14,
-    marginTop: 5,
-  },
-  phone: {
-    fontSize: 14,
-    marginTop: 5,
+    fontSize: 16,
+    marginBottom: 5,
   },
   description: {
     fontSize: 14,
-    marginTop: 5,
+    color: '#666',
+    marginBottom: 10,
   },
-  status: {
+  callFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
-    marginTop: 5,
+    fontWeight: '600',
+  },
+  phone: {
+    fontSize: 14,
+    color: '#666',
   },
 }); 

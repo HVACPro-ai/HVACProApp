@@ -1,18 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, Alert, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Button, Alert, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import Logo from '../../components/Logo';
 import { FontAwesome } from '@expo/vector-icons';
-import { fetchServiceCalls } from '../../api/serviceCallsApi';
+import { ServiceCall, fetchServiceCalls } from '@/src/api/serviceCallsApi';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function TabsHomeScreen() {
+interface QuickAction {
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+}
+
+interface UpcomingCall extends ServiceCall {
+  time: string;
+}
+
+export default function HomeScreen() {
   const router = useRouter();
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
-  const [todayServiceCalls, setTodayServiceCalls] = useState([]);
+  const [upcomingCalls, setUpcomingCalls] = useState<UpcomingCall[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -22,15 +34,24 @@ export default function TabsHomeScreen() {
       setUserRole(role || 'Technician');
     };
 
-    const loadTodayServiceCalls = async () => {
-      const calls = await fetchServiceCalls();
-      const today = new Date().toLocaleDateString();
-      const filteredCalls = calls.filter(call => call.date === today);
-      setTodayServiceCalls(filteredCalls);
+    const loadUpcomingCalls = async () => {
+      setLoading(true);
+      try {
+        const calls = await fetchServiceCalls();
+        const upcomingCallsData = calls.map(call => ({
+          ...call,
+          time: new Date(call.date).toLocaleTimeString()
+        }));
+        setUpcomingCalls(upcomingCallsData);
+      } catch (error) {
+        console.error('Error loading upcoming calls:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadUserData();
-    loadTodayServiceCalls();
+    loadUpcomingCalls();
   }, []);
 
   const handleLogout = async () => {
@@ -39,38 +60,71 @@ export default function TabsHomeScreen() {
     router.replace('/(auth)/login');
   };
 
-  const QuickActionCard = ({ title, icon, onPress }) => (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
-      <FontAwesome name={icon} size={24} color="#fff" />
-      <ThemedText style={styles.cardText}>{title}</ThemedText>
+  const quickActions: QuickAction[] = [
+    {
+      title: 'New Call',
+      icon: 'add-circle',
+      onPress: () => router.push('/serviceCalls')
+    },
+    {
+      title: 'Diagnose',
+      icon: 'medical',
+      onPress: () => router.push('/diagnostics')
+    },
+    {
+      title: 'Inventory',
+      icon: 'list',
+      onPress: () => router.push('/inventory')
+    }
+  ];
+
+  const renderQuickAction = (action: QuickAction) => (
+    <TouchableOpacity
+      key={action.title}
+      style={styles.quickActionButton}
+      onPress={action.onPress}
+    >
+      <Ionicons name={action.icon} size={24} color="#007AFF" />
+      <ThemedText style={styles.quickActionText}>{action.title}</ThemedText>
+    </TouchableOpacity>
+  );
+
+  const renderUpcomingCall = (call: UpcomingCall) => (
+    <TouchableOpacity
+      key={call.id}
+      style={styles.callCard}
+      onPress={() => router.push('/serviceCalls')}
+    >
+      <View style={styles.callInfo}>
+        <ThemedText style={styles.callCustomer}>{call.customerName} - {call.time}</ThemedText>
+        <ThemedText style={styles.callAddress}>{call.address}</ThemedText>
+      </View>
+      <Ionicons name="chevron-forward" size={24} color="#007AFF" />
     </TouchableOpacity>
   );
 
   return (
     <ThemedView style={styles.container}>
       <Logo />
-      <View style={styles.headerContent}>
+      <ScrollView>
         <ThemedText style={styles.title}>Welcome, {userName}!</ThemedText>
         <ThemedText style={styles.role}>Role: {userRole}</ThemedText>
-      </View>
 
-      <View style={styles.quickActions}>
-        <QuickActionCard title="Start Diagnostic" icon="wrench" onPress={() => router.push('/(tabs)/diagnostics')} />
-        <QuickActionCard title="Check Inventory" icon="box" onPress={() => router.push('/(tabs)/inventory')} />
-        <QuickActionCard title="View Service Calls" icon="clipboard" onPress={() => router.push('/(tabs)/serviceCalls')} />
-      </View>
+        <View style={styles.quickActionsContainer}>
+          {quickActions.map(renderQuickAction)}
+        </View>
 
-      <View style={styles.todayServiceCalls}>
-        <ThemedText style={styles.sectionTitle}>Today's Service Calls</ThemedText>
-        <FlatList
-          data={todayServiceCalls}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <ThemedText style={styles.activityItem}>{item.customerName} - {item.time}</ThemedText>
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Today's Service Calls</ThemedText>
+          {upcomingCalls.length > 0 ? (
+            upcomingCalls.map(renderUpcomingCall)
+          ) : (
+            <ThemedText style={styles.noCallsText}>
+              No upcoming calls scheduled
+            </ThemedText>
           )}
-        />
-      </View>
-
+        </View>
+      </ScrollView>
       <Button title="Logout" onPress={handleLogout} />
     </ThemedView>
   );
@@ -82,48 +136,58 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#f5f5f5',
   },
-  headerContent: {
-    alignItems: 'center',
-    marginVertical: 20,
-  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
   },
   role: {
     fontSize: 16,
     color: '#666',
   },
-  quickActions: {
+  quickActionsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 20,
+    justifyContent: 'space-around',
+    marginBottom: 30,
   },
-  card: {
-    flex: 1,
-    backgroundColor: '#2f95dc',
-    borderRadius: 10,
-    padding: 15,
-    marginHorizontal: 5,
+  quickActionButton: {
     alignItems: 'center',
-    justifyContent: 'center',
+    padding: 15,
   },
-  cardText: {
-    color: '#fff',
+  quickActionText: {
     marginTop: 5,
-    fontSize: 16,
+    fontSize: 12,
   },
-  todayServiceCalls: {
-    marginTop: 20,
+  section: {
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 15,
+  },
+  callCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
     marginBottom: 10,
   },
-  activityItem: {
+  callInfo: {
+    flex: 1,
+  },
+  callCustomer: {
     fontSize: 16,
-    marginBottom: 5,
+    fontWeight: '500',
+  },
+  callAddress: {
+    fontSize: 14,
+    color: '#666',
+  },
+  noCallsText: {
+    textAlign: 'center',
+    color: '#666',
+    padding: 20,
   },
 }); 

@@ -4,7 +4,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedButton } from '@/components/ThemedButton';
-import { fetchDiagnostics } from '@/api/diagnosticsApi';
+import { fetchDiagnostics } from '@/src/api/diagnosticsApi';
 
 type DiagnosticStep = 'initial' | 'details' | 'symptoms' | 'results';
 

@@ -9,48 +9,29 @@
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#007AFF"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cbollinger.hvacpro"
+      "bundleIdentifier": "com.hvacpro.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#007AFF"
       },
-      "permissions": [
-        "android.permission.CAMERA"
-      ],
-      "package": "com.cbollinger.hvacpro"
+      "package": "com.hvacpro.app"
     },
-    "scheme": "hvacpro",
     "web": {
-      "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
-        }
-      ]
+      "expo-router"
     ],
-    "extra": {
-      "supabaseUrl": "https://xwlyiqsmuhdgwvibmdtb.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bHlpcXNtdWhkZ3d2aWJtZHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyNDU4MDksImV4cCI6MjA1NDgyMTgwOX0.K9v5gmIgCygtxmwGA_eyI3TkvwhDWmTBCa47FAZYycU"
-    },
-    "newArchEnabled": true,
-    "jsEngine": "hermes",
-    "developmentClient": {
-      "silentLogs": true
-    }
+    "scheme": "hvacpro",
+    "newArchEnabled": true
   }
 } 
