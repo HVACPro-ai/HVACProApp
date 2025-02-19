@@ -1,19 +1,21 @@
 import { Link, router } from 'expo-router';
-import { StyleSheet, TextInput, Button, View, Text } from 'react-native';
+import { StyleSheet, TextInput, Button, View, Text, Alert } from 'react-native';
 import React, { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterScreen() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleRegister = async () => {
-    // Mock registration logic
-    console.log('Registering user:', email);
-    // Store user session
-    await AsyncStorage.setItem('userToken', 'your_token_here');
-    // Navigate to Home screen after successful registration
-    router.replace('/(tabs)');
+    if (!username || !password) {
+      Alert.alert('Error', 'Please fill in all fields.');
+      return;
+    }
+
+    // Save user data (this is a mock, replace with actual API call)
+    await AsyncStorage.setItem('userToken', 'mockToken');
+    Alert.alert('Success', 'User registered successfully!');
   };
 
   return (
@@ -21,10 +23,10 @@ export default function RegisterScreen() {
       <Text style={styles.title}>Register</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="Username"
         placeholderTextColor="#999"
-        value={email}
-        onChangeText={setEmail}
+        value={username}
+        onChangeText={setUsername}
         autoCapitalize="none"
         keyboardType="email-address"
       />

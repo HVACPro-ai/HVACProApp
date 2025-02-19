@@ -4,6 +4,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import AuthLayout from './(auth)/_layout';
+import * as Notifications from 'expo-notifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -34,4 +43,9 @@ export default function App() {
       {isAuthenticated ? <Tabs /> : <AuthLayout />}
     </NavigationContainer>
   );
-} 
+}
+
+Notifications.addNotificationResponseReceivedListener(response => {
+  const { serviceCallId } = response.notification.request.content.data;
+  // Navigate to the service call details screen using the serviceCallId
+}); 

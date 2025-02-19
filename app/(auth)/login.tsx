@@ -1,35 +1,26 @@
 import { Link, router } from 'expo-router';
 import { StyleSheet, TextInput, Button, View, Text, Alert } from 'react-native';
 import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loginUser } from '../api/serviceCallsApi';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
-    try {
-      // Basic validation
-      if (!email || !password) {
-        Alert.alert('Error', 'Please enter both email and password');
-        return;
-      }
+    if (!username || !password) {
+      Alert.alert('Error', 'Please fill in all fields.');
+      return;
+    }
 
-      console.log('Attempting login with:', email);
-      
-      // Set authentication state and navigate
-      if (global.setIsAuthenticated) {
-        await Promise.resolve(global.setIsAuthenticated(true));
-        console.log('Authentication state set to true');
-        
-        // Navigate to tabs
-        await router.replace('/(tabs)');
-        console.log('Navigation completed');
-      } else {
-        throw new Error('setIsAuthenticated is not available');
-      }
+    try {
+      const token = await loginUser(username, password);
+      await AsyncStorage.setItem('userToken', token);
+      Alert.alert('Success', 'User logged in successfully!');
     } catch (error) {
-      console.error('Login failed:', error);
       Alert.alert('Login Error', 'Failed to log in. Please try again.');
+      console.error(error);
     }
   };
 
@@ -38,10 +29,10 @@ export default function LoginScreen() {
       <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="Username"
         placeholderTextColor="#999"
-        value={email}
-        onChangeText={setEmail}
+        value={username}
+        onChangeText={setUsername}
         autoCapitalize="none"
         keyboardType="email-address"
       />

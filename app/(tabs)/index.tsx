@@ -4,6 +4,7 @@ import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import Logo from '../../components/Logo';
 
 export default function TabsHomeScreen() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function TabsHomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <Logo />
       <View style={styles.headerContent}>
         <ThemedText style={styles.title}>Welcome to HVAC Pro</ThemedText>
       </View>

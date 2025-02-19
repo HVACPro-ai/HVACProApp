@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Button, FlatList, Platform } from 'react-native';
+import { StyleSheet, View, Button, FlatList, Platform, Alert } from 'react-native';
 import { ThemedView } from '../../components/ThemedView';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedInput } from '../../components/ThemedInput';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Notifications from 'expo-notifications';
+import { FontAwesome } from '@expo/vector-icons';
+import { SchedulableTriggerInputTypes } from 'expo-notifications';
 
 type ServiceCall = {
   id: string;
@@ -27,26 +30,53 @@ export default function ServiceCallsScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const addServiceCall = () => {
-    if (customerName.trim() && address.trim() && phoneNumber.trim()) {
-      const call: ServiceCall = {
-        id: Date.now().toString(),
-        customerName,
-        date: date.toLocaleDateString(),
-        time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        address,
-        phoneNumber,
-        description,
-        status: 'Pending'
-      };
-      setServiceCalls([...serviceCalls, call]);
-      // Clear form
-      setCustomerName('');
-      setDate(new Date());
-      setTime(new Date());
-      setAddress('');
-      setPhoneNumber('');
-      setDescription('');
+  const handleSaveServiceCall = async () => {
+    try {
+      if (customerName.trim() && address.trim() && phoneNumber.trim()) {
+        const serviceCall: ServiceCall = {
+          id: Date.now().toString(),
+          customerName,
+          date: date.toLocaleDateString(),
+          time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          address,
+          phoneNumber,
+          description,
+          status: 'Pending'
+        };
+
+        // Create a notification trigger for the service call date
+        const notificationDate = new Date(date);
+        notificationDate.setHours(time.getHours());
+        notificationDate.setMinutes(time.getMinutes());
+
+        // Schedule notification
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'Service Call Reminder',
+            body: `Service call for ${customerName} at ${address}`,
+            data: { serviceCallId: serviceCall.id },
+          },
+          trigger: {
+            type: SchedulableTriggerInputTypes.DATE,
+            date: notificationDate,
+          },
+        });
+
+        setServiceCalls([...serviceCalls, serviceCall]);
+        // Clear form
+        setCustomerName('');
+        setDate(new Date());
+        setTime(new Date());
+        setAddress('');
+        setPhoneNumber('');
+        setDescription('');
+        Alert.alert('Success', 'Service call saved successfully!');
+      } else {
+        Alert.alert('Error', 'Please fill in all required fields');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save service call');
+      console.error(error);
     }
   };
 
@@ -122,7 +152,10 @@ export default function ServiceCallsScreen() {
           style={[styles.input, styles.multilineInput]}
         />
 
-        <Button title="Add Service Call" onPress={addServiceCall} />
+        <Button
+          title="Add Service Call"
+          onPress={handleSaveServiceCall}
+        />
       </View>
 
       <FlatList
