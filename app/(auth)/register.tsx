@@ -13,9 +13,16 @@ export default function RegisterScreen() {
       return;
     }
 
+    // Simple validation for password length
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters long.');
+      return;
+    }
+
     // Save user data (this is a mock, replace with actual API call)
     await AsyncStorage.setItem('userToken', 'mockToken');
     Alert.alert('Success', 'User registered successfully!');
+    router.replace('/(auth)/login'); // Navigate to login after registration
   };
 
   return (

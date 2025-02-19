@@ -7,6 +7,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Notifications from 'expo-notifications';
 import { FontAwesome } from '@expo/vector-icons';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
+import { fetchServiceCalls, saveServiceCall } from '../../api/serviceCallsApi';
 
 type ServiceCall = {
   id: string;
@@ -78,6 +79,16 @@ export default function ServiceCallsScreen() {
       Alert.alert('Error', 'Failed to save service call');
       console.error(error);
     }
+  };
+
+  const handleDeleteServiceCall = (id: string) => {
+    setServiceCalls(serviceCalls.filter(call => call.id !== id));
+    Alert.alert('Success', 'Service call deleted successfully!');
+  };
+
+  const loadServiceCalls = async () => {
+    const calls = await fetchServiceCalls();
+    setServiceCalls(calls);
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -169,6 +180,7 @@ export default function ServiceCallsScreen() {
             <ThemedText style={styles.phone}>{item.phoneNumber}</ThemedText>
             <ThemedText style={styles.description}>{item.description}</ThemedText>
             <ThemedText style={styles.status}>{item.status}</ThemedText>
+            <Button title="Delete" onPress={() => handleDeleteServiceCall(item.id)} />
           </View>
         )}
       />

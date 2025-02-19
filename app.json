@@ -48,6 +48,9 @@
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bHlpcXNtdWhkZ3d2aWJtZHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyNDU4MDksImV4cCI6MjA1NDgyMTgwOX0.K9v5gmIgCygtxmwGA_eyI3TkvwhDWmTBCa47FAZYycU"
     },
     "newArchEnabled": true,
-    "jsEngine": "hermes"
+    "jsEngine": "hermes",
+    "developmentClient": {
+      "silentLogs": true
+    }
   }
 } 

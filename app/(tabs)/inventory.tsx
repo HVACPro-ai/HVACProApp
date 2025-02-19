@@ -1,73 +1,62 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, Button, FlatList } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-interface InventoryItem {
-  id: string;
-  name: string;
-}
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, FlatList, Button, Alert } from 'react-native';
+import { ThemedView } from '../../components/ThemedView';
+import { ThemedText } from '../../components/ThemedText';
+import { ThemedInput } from '../../components/ThemedInput';
+import { fetchInventoryItems, saveInventoryItem } from '../../api/inventoryApi';
 
 export default function InventoryScreen() {
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [newItemName, setNewItemName] = useState('');
+  const [items, setItems] = useState([]);
+  const [itemName, setItemName] = useState('');
+  const [itemQuantity, setItemQuantity] = useState('');
 
-  const addItem = () => {
-    if (newItemName.trim()) {
-      const newItem: InventoryItem = {
-        id: Date.now().toString(),
-        name: newItemName.trim(),
-      };
-      setItems([...items, newItem]);
-      setNewItemName('');
+  useEffect(() => {
+    const loadItems = async () => {
+      const inventoryItems = await fetchInventoryItems();
+      setItems(inventoryItems);
+    };
+
+    loadItems();
+  }, []);
+
+  const handleAddItem = async () => {
+    if (!itemName || !itemQuantity) {
+      Alert.alert('Error', 'Please fill in all fields.');
+      return;
     }
-  };
 
-  const loadSampleData = () => {
-    const sampleItems: InventoryItem[] = [
-      { id: '1', name: 'Air Filter' },
-      { id: '2', name: 'Thermostat' },
-      { id: '3', name: 'Refrigerant' },
-    ];
-    setItems(sampleItems);
-  };
-
-  const deleteItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
+    const newItem = { name: itemName, quantity: parseInt(itemQuantity) };
+    await saveInventoryItem(newItem);
+    setItems([...items, newItem]);
+    setItemName('');
+    setItemQuantity('');
+    Alert.alert('Success', 'Item added to inventory!');
   };
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Inventory</ThemedText>
-
-      <View style={styles.addItemSection}>
-        <TextInput
-          style={styles.input}
-          value={newItemName}
-          onChangeText={setNewItemName}
-          placeholder="Enter item name"
-          placeholderTextColor="#999"
-        />
-        <Button title="Add Item" onPress={addItem} />
-      </View>
-
-      {items.length === 0 ? (
-        <View style={styles.emptyState}>
-          <ThemedText>No items in inventory</ThemedText>
-          <Button title="Load Sample Data" onPress={loadSampleData} />
-        </View>
-      ) : (
-        <FlatList
-          data={items}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.itemRow}>
-              <ThemedText>{item.name}</ThemedText>
-              <Button title="Delete" onPress={() => deleteItem(item.id)} color="red" />
-            </View>
-          )}
-        />
-      )}
+      <ThemedText style={styles.title}>Inventory Management</ThemedText>
+      <ThemedInput
+        value={itemName}
+        onChangeText={setItemName}
+        placeholder="Item Name"
+        style={styles.input}
+      />
+      <ThemedInput
+        value={itemQuantity}
+        onChangeText={setItemQuantity}
+        placeholder="Quantity"
+        keyboardType="numeric"
+        style={styles.input}
+      />
+      <Button title="Add Item" onPress={handleAddItem} />
+      <FlatList
+        data={items}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <ThemedText style={styles.item}>{item.name} - {item.quantity}</ThemedText>
+        )}
+      />
     </ThemedView>
   );
 }
@@ -77,29 +66,16 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  addItemSection: {
-    marginVertical: 20,
-    gap: 10,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
   input: {
-    width: '100%',
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+    marginBottom: 15,
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 20,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+  item: {
+    fontSize: 16,
+    marginVertical: 5,
   },
 }); 
