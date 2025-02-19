@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, Alert, FlatList } from 'react-native';
+import { StyleSheet, View, Button, Alert, FlatList, TouchableOpacity } from 'react-native';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import Logo from '../../components/Logo';
+import { FontAwesome } from '@expo/vector-icons';
+import { fetchServiceCalls } from '../../api/serviceCallsApi';
 
 export default function TabsHomeScreen() {
   const router = useRouter();
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
-  const [recentActivities, setRecentActivities] = useState([]);
+  const [todayServiceCalls, setTodayServiceCalls] = useState([]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -20,17 +22,15 @@ export default function TabsHomeScreen() {
       setUserRole(role || 'Technician');
     };
 
-    const loadRecentActivities = async () => {
-      // Mock recent activities, replace with actual data fetching
-      const activities = [
-        { id: '1', title: 'Service Call for John Doe' },
-        { id: '2', title: 'Diagnostic for AC Unit' },
-      ];
-      setRecentActivities(activities);
+    const loadTodayServiceCalls = async () => {
+      const calls = await fetchServiceCalls();
+      const today = new Date().toLocaleDateString();
+      const filteredCalls = calls.filter(call => call.date === today);
+      setTodayServiceCalls(filteredCalls);
     };
 
     loadUserData();
-    loadRecentActivities();
+    loadTodayServiceCalls();
   }, []);
 
   const handleLogout = async () => {
@@ -38,6 +38,13 @@ export default function TabsHomeScreen() {
     Alert.alert('Logged Out', 'You have successfully logged out.');
     router.replace('/(auth)/login');
   };
+
+  const QuickActionCard = ({ title, icon, onPress }) => (
+    <TouchableOpacity style={styles.card} onPress={onPress}>
+      <FontAwesome name={icon} size={24} color="#fff" />
+      <ThemedText style={styles.cardText}>{title}</ThemedText>
+    </TouchableOpacity>
+  );
 
   return (
     <ThemedView style={styles.container}>
@@ -48,18 +55,18 @@ export default function TabsHomeScreen() {
       </View>
 
       <View style={styles.quickActions}>
-        <Button title="Start Diagnostic" onPress={() => router.push('/(tabs)/diagnostics')} />
-        <Button title="Check Inventory" onPress={() => router.push('/(tabs)/inventory')} />
-        <Button title="View Service Calls" onPress={() => router.push('/(tabs)/serviceCalls')} />
+        <QuickActionCard title="Start Diagnostic" icon="wrench" onPress={() => router.push('/(tabs)/diagnostics')} />
+        <QuickActionCard title="Check Inventory" icon="box" onPress={() => router.push('/(tabs)/inventory')} />
+        <QuickActionCard title="View Service Calls" icon="clipboard" onPress={() => router.push('/(tabs)/serviceCalls')} />
       </View>
 
-      <View style={styles.recentActivities}>
-        <ThemedText style={styles.sectionTitle}>Recent Activities</ThemedText>
+      <View style={styles.todayServiceCalls}>
+        <ThemedText style={styles.sectionTitle}>Today's Service Calls</ThemedText>
         <FlatList
-          data={recentActivities}
+          data={todayServiceCalls}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <ThemedText style={styles.activityItem}>{item.title}</ThemedText>
+            <ThemedText style={styles.activityItem}>{item.customerName} - {item.time}</ThemedText>
           )}
         />
       </View>
@@ -73,6 +80,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   headerContent: {
     alignItems: 'center',
@@ -88,10 +96,25 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginVertical: 20,
-    gap: 10,
   },
-  recentActivities: {
+  card: {
+    flex: 1,
+    backgroundColor: '#2f95dc',
+    borderRadius: 10,
+    padding: 15,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardText: {
+    color: '#fff',
+    marginTop: 5,
+    fontSize: 16,
+  },
+  todayServiceCalls: {
     marginTop: 20,
   },
   sectionTitle: {

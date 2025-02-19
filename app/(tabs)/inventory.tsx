@@ -1,61 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Button, Alert } from 'react-native';
-import { ThemedView } from '../../components/ThemedView';
-import { ThemedText } from '../../components/ThemedText';
-import { ThemedInput } from '../../components/ThemedInput';
-import { fetchInventoryItems, saveInventoryItem } from '../../api/inventoryApi';
+import { View, StyleSheet, FlatList } from 'react-native';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedButton } from '@/components/ThemedButton';
+import { InventoryItem, fetchInventoryItems, saveInventoryItem } from '@/api/inventoryApi';
 
-export default function InventoryScreen() {
-  const [items, setItems] = useState([]);
-  const [itemName, setItemName] = useState('');
-  const [itemQuantity, setItemQuantity] = useState('');
+export default function Inventory() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const loadItems = async () => {
-      const inventoryItems = await fetchInventoryItems();
-      setItems(inventoryItems);
-    };
-
-    loadItems();
+    loadInventory();
   }, []);
 
-  const handleAddItem = async () => {
-    if (!itemName || !itemQuantity) {
-      Alert.alert('Error', 'Please fill in all fields.');
-      return;
+  const loadInventory = async () => {
+    setLoading(true);
+    try {
+      const items = await fetchInventoryItems();
+      setInventory(items);
+    } catch (error) {
+      console.error('Error loading inventory:', error);
+    } finally {
+      setLoading(false);
     }
-
-    const newItem = { name: itemName, quantity: parseInt(itemQuantity) };
-    await saveInventoryItem(newItem);
-    setItems([...items, newItem]);
-    setItemName('');
-    setItemQuantity('');
-    Alert.alert('Success', 'Item added to inventory!');
   };
+
+  const addItem = async () => {
+    try {
+      const newItem = await saveInventoryItem({
+        name: 'New Part',
+        quantity: 1,
+        partNumber: 'NP-001',
+        location: 'Shelf A',
+        minQuantity: 1,
+      });
+      setInventory([...inventory, newItem]);
+    } catch (error) {
+      console.error('Error adding item:', error);
+    }
+  };
+
+  const renderItem = ({ item }: { item: InventoryItem }) => (
+    <View style={styles.itemContainer}>
+      <ThemedText style={styles.itemName}>{item.name}</ThemedText>
+      <ThemedText>Part #: {item.partNumber}</ThemedText>
+      <ThemedText>Quantity: {item.quantity}</ThemedText>
+      <ThemedText>Location: {item.location}</ThemedText>
+    </View>
+  );
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Inventory Management</ThemedText>
-      <ThemedInput
-        value={itemName}
-        onChangeText={setItemName}
-        placeholder="Item Name"
-        style={styles.input}
-      />
-      <ThemedInput
-        value={itemQuantity}
-        onChangeText={setItemQuantity}
-        placeholder="Quantity"
-        keyboardType="numeric"
-        style={styles.input}
-      />
-      <Button title="Add Item" onPress={handleAddItem} />
+      <View style={styles.header}>
+        <ThemedText style={styles.title}>Inventory</ThemedText>
+        <ThemedButton title="Add Item" onPress={addItem} />
+      </View>
+
       <FlatList
-        data={items}
+        data={inventory}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ThemedText style={styles.item}>{item.name} - {item.quantity}</ThemedText>
-        )}
+        style={styles.list}
       />
     </ThemedView>
   );
@@ -66,16 +71,27 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
   },
-  input: {
-    marginBottom: 15,
+  list: {
+    flex: 1,
   },
-  item: {
-    fontSize: 16,
-    marginVertical: 5,
+  itemContainer: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  itemName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
 }); 
