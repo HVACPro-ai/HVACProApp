@@ -7,12 +7,15 @@ import { ThemedInput } from '@/components/ThemedInput';
 import { router } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { validateEmail } from '@/src/utils/validation';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const { resetPassword, loading } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const handleResetPassword = async () => {
     setError('');
@@ -40,6 +43,14 @@ export default function ResetPassword() {
 
   return (
     <ThemedView style={styles.container}>
+      <TouchableOpacity 
+        style={[styles.backButton, { top: insets.top + 10 }]}
+        onPress={() => router.back()}
+        disabled={loading}
+      >
+        <Ionicons name="arrow-back" size={24} color="#007AFF" />
+      </TouchableOpacity>
+
       <ThemedText style={styles.title}>Reset Password</ThemedText>
       
       <View style={styles.form}>
@@ -75,16 +86,6 @@ export default function ResetPassword() {
           style={styles.button}
         />
 
-        <TouchableOpacity 
-          onPress={() => router.back()}
-          style={styles.backButton}
-          disabled={loading}
-        >
-          <ThemedText style={styles.backButtonText}>
-            Back to Login
-          </ThemedText>
-        </TouchableOpacity>
-
         {loading && (
           <ActivityIndicator 
             size="large" 
@@ -92,6 +93,16 @@ export default function ResetPassword() {
             style={styles.loader}
           />
         )}
+
+        <TouchableOpacity 
+          onPress={() => router.back()}
+          style={styles.footerButton}
+          disabled={loading}
+        >
+          <ThemedText style={styles.footerText}>
+            Back to Login
+          </ThemedText>
+        </TouchableOpacity>
       </View>
     </ThemedView>
   );
@@ -138,10 +149,17 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   backButton: {
-    marginTop: 20,
-    alignItems: 'center',
+    position: 'absolute',
+    left: 20,
+    zIndex: 1,
+    padding: 10,
   },
-  backButtonText: {
+  footerButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+  },
+  footerText: {
     color: '#007AFF',
+    textAlign: 'center',
   },
 }); 

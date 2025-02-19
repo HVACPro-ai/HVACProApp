@@ -1,37 +1,56 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedInput } from '@/components/ThemedInput';
 import { router } from 'expo-router';
+import { useAuth } from '@/src/context/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  checkBiometricsAvailable,
+  authenticateWithBiometrics,
+  isBiometricsEnabled
+} from '@/src/utils/biometrics';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [biometricsAvailable, setBiometricsAvailable] = useState(false);
+  const { signIn, loading, biometricLogin } = useAuth();
+
+  useEffect(() => {
+    checkBiometricAvailability();
+  }, []);
+
+  const checkBiometricAvailability = async () => {
+    try {
+      const available = await checkBiometricsAvailable();
+      const enabled = await isBiometricsEnabled();
+      setBiometricsAvailable(available && enabled);
+    } catch (err) {
+      console.error('Error checking biometrics:', err);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    try {
+      const success = await authenticateWithBiometrics();
+      if (success) {
+        await biometricLogin();
+      }
+    } catch (err) {
+      setError('Biometric authentication failed');
+    }
+  };
 
   const handleLogin = async () => {
     setError('');
-    setLoading(true);
-
     try {
-      // Basic validation
-      if (!email || !password) {
-        throw new Error('Please enter both email and password');
-      }
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // For testing, accept any email/password
-      console.log('Logged in with:', email);
-      router.replace('/(tabs)');
+      await signIn(email, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -67,6 +86,43 @@ export default function Login() {
           disabled={loading}
           style={styles.button}
         />
+
+        {biometricsAvailable && (
+          <TouchableOpacity 
+            style={styles.biometricsButton}
+            onPress={handleBiometricLogin}
+            disabled={loading}
+          >
+            <Ionicons 
+              name="finger-print" 
+              size={28} 
+              color="#007AFF" 
+            />
+            <ThemedText style={styles.biometricsText}>
+              Login with Biometrics
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+
+        <View style={styles.footer}>
+          <TouchableOpacity 
+            onPress={() => router.push('/(auth)/register')}
+            disabled={loading}
+          >
+            <ThemedText style={styles.footerText}>
+              Don't have an account? Sign up
+            </ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={() => router.push('/(auth)/reset-password')}
+            disabled={loading}
+          >
+            <ThemedText style={styles.footerText}>
+              Forgot password?
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
 
         {loading && (
           <ActivityIndicator 
@@ -109,5 +165,25 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginTop: 20,
-  }
+  },
+  footer: {
+    marginTop: 20,
+    alignItems: 'center',
+    gap: 10,
+  },
+  footerText: {
+    color: '#007AFF',
+  },
+  biometricsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 15,
+    padding: 10,
+  },
+  biometricsText: {
+    color: '#007AFF',
+    marginLeft: 10,
+    fontSize: 16,
+  },
 });

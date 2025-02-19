@@ -7,6 +7,8 @@ import { ThemedInput } from '@/components/ThemedInput';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { validatePassword } from '@/src/utils/validation';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ResetPasswordConfirm() {
   const { email } = useLocalSearchParams<{ email: string }>();
@@ -15,6 +17,7 @@ export default function ResetPasswordConfirm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { confirmPasswordReset, loading } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -51,6 +54,14 @@ export default function ResetPasswordConfirm() {
 
   return (
     <ThemedView style={styles.container}>
+      <TouchableOpacity 
+        style={[styles.backButton, { top: insets.top + 10 }]}
+        onPress={() => router.back()}
+        disabled={loading}
+      >
+        <Ionicons name="arrow-back" size={24} color="#007AFF" />
+      </TouchableOpacity>
+
       <ThemedText style={styles.title}>Reset Password</ThemedText>
       
       <View style={styles.form}>
@@ -97,16 +108,6 @@ export default function ResetPasswordConfirm() {
           style={styles.button}
         />
 
-        <TouchableOpacity 
-          onPress={() => router.push('/(auth)/reset-password')}
-          style={styles.backButton}
-          disabled={loading}
-        >
-          <ThemedText style={styles.backButtonText}>
-            Resend Code
-          </ThemedText>
-        </TouchableOpacity>
-
         {loading && (
           <ActivityIndicator 
             size="large" 
@@ -114,6 +115,16 @@ export default function ResetPasswordConfirm() {
             style={styles.loader}
           />
         )}
+
+        <TouchableOpacity 
+          onPress={() => router.push('/(auth)/reset-password')}
+          style={styles.footerButton}
+          disabled={loading}
+        >
+          <ThemedText style={styles.footerText}>
+            Resend Code
+          </ThemedText>
+        </TouchableOpacity>
       </View>
     </ThemedView>
   );
@@ -155,10 +166,17 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   backButton: {
-    marginTop: 20,
-    alignItems: 'center',
+    position: 'absolute',
+    left: 20,
+    zIndex: 1,
+    padding: 10,
   },
-  backButtonText: {
+  footerButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+  },
+  footerText: {
     color: '#007AFF',
+    textAlign: 'center',
   },
 }); 
