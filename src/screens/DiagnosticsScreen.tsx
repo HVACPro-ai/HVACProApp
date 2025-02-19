@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedInput } from '@/components/ThemedInput';
-import { ThemedButton } from '@/components/ThemedButton';
-import { ImageUploader } from '@/components/dashboard/ImageUploader';
-import { StepProgress } from '@/components/diagnostics/StepProgress';
-import { fetchDiagnostics, analyzeEquipmentImages, getEfficiencyOptimizations } from '@/src/api/diagnosticsApi';
+import { ThemedView } from '../components/ThemedView';
+import { ThemedText } from '../components/ThemedText';
+import { ThemedInput } from '../components/ThemedInput';
+import { ThemedButton } from '../components/ThemedButton';
+import { ImageUploader } from '../components/dashboard/ImageUploader';
+import { StepProgress } from '../components/diagnostics/StepProgress';
+import { SensorDataInput } from '../components/diagnostics/SensorDataInput';
+import { AIAnalysisResults } from '../components/diagnostics/AIAnalysisResults';
+import { DiagnosticGuide } from '../components/diagnostics/DiagnosticGuide';
+import { fetchDiagnostics, analyzeEquipmentImages, getEfficiencyOptimizations } from '../api/diagnosticsApi';
 import { Ionicons } from '@expo/vector-icons';
-import { SensorDataInput } from '@/components/diagnostics/SensorDataInput';
-import { AIAnalysisResults } from '@/components/diagnostics/AIAnalysisResults';
-import { DiagnosticGuide } from '@/components/diagnostics/DiagnosticGuide';
+import type { ServiceImage } from '../types';
 
 interface DiagnosticState {
   modelNumber: string;

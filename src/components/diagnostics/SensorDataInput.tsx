@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedInput, ThemedInputProps } from '@/components/ThemedInput';
+import { ThemedText } from '../../components/ThemedText';
+import { ThemedInput } from '../../components/ThemedInput';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SensorData {
@@ -14,7 +14,7 @@ interface SensorData {
 }
 
 interface Props {
-  onDataChange: (data: SensorData) => void;
+  onDataChange: (data: Partial<SensorData>) => void;
   currentData: Partial<SensorData>;
 }
 
