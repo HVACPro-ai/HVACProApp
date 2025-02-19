@@ -53,6 +53,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="box" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="serviceCalls"
+        options={{
+          title: 'Service Calls',
+          tabBarIcon: ({ color }) => <TabBarIcon name="clipboard" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
