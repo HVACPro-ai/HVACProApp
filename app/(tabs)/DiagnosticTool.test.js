@@ -2,14 +2,20 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import DiagnosticTool from './DiagnosticTool';
 
-test('renders DiagnosticTool and handles input', () => {
-  const { getByPlaceholderText, getByText } = render(<DiagnosticTool />);
-  
-  fireEvent.changeText(getByPlaceholderText('Model Number'), 'Model123');
-  fireEvent.changeText(getByPlaceholderText('Serial Number'), 'Serial456');
-  fireEvent.changeText(getByPlaceholderText('Describe Symptoms'), 'Not cooling');
+export default function DiagnosticToolTest() {
+  return null;
+}
 
-  fireEvent.press(getByText('Submit'));
+describe('DiagnosticTool', () => {
+  test('renders DiagnosticTool and handles input', () => {
+    const { getByPlaceholderText, getByText } = render(<DiagnosticTool />);
+    
+    fireEvent.changeText(getByPlaceholderText('Model Number'), 'Model123');
+    fireEvent.changeText(getByPlaceholderText('Serial Number'), 'Serial456');
+    fireEvent.changeText(getByPlaceholderText('Describe Symptoms'), 'Not cooling');
 
-  // Add assertions to check if diagnostics are fetched correctly
+    fireEvent.press(getByText('Submit'));
+
+    // Add assertions to check if diagnostics are fetched correctly
+  });
 }); 

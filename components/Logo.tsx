@@ -1,6 +1,5 @@
 import React from 'react';
-import Svg, { Circle, Text } from 'react-native-svg';
-import { View } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 
 interface LogoProps {
   size?: number;
@@ -8,20 +7,17 @@ interface LogoProps {
 
 export default function Logo({ size = 100 }: LogoProps) {
   return (
-    <View style={{ width: size, height: size }}>
-      <Svg width={size} height={size} viewBox="0 0 100 100">
-        <Circle cx="50" cy="50" r="45" fill="#007AFF" />
-        <Text
-          x="50"
-          y="60"
-          fontSize="24"
-          textAnchor="middle"
-          fill="white"
-          fontFamily="Arial"
-        >
-          HVAC
-        </Text>
-      </Svg>
-    </View>
+    <Image
+      source={require('../assets/images/icon.png')}
+      style={[styles.logo, { width: size, height: size }]}
+      resizeMode="contain"
+    />
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  logo: {
+    width: 100,
+    height: 100,
+  },
+}); 

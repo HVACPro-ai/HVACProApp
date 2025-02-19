@@ -1,27 +1,23 @@
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 
-const Logo = () => {
+interface LogoProps {
+  size?: number;
+}
+
+export default function Logo({ size = 100 }: LogoProps) {
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../assets/logo.png')} // Ensure you have the logo image in your assets folder
-        style={styles.logo}
-        resizeMode="contain"
-      />
-    </View>
+    <Image
+      source={require('../../assets/images/icon.png')}  // Note: ../../ because we're in app/components
+      style={[styles.logo, { width: size, height: size }]}
+      resizeMode="contain"
+    />
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    marginVertical: 20,
-  },
   logo: {
-    width: 150, // Adjust size as needed
-    height: 150, // Adjust size as needed
+    width: 100,
+    height: 100,
   },
-});
-
-export default Logo; 
+}); 
