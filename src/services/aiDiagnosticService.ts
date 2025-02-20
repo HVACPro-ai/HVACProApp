@@ -701,4 +701,29 @@ export async function analyzeDiagnostic(context: DiagnosticContext): Promise<AIA
     safetyNotes: [],
     additionalRecommendations: []
   };
-} 
+}
+
+// Move this into a test function
+async function testAIService() {
+  const aiService = AIDiagnosticService.getInstance();
+  try {
+    const testResult = await aiService.getDiagnosis({
+      equipmentType: { 
+        type: 'ac',
+        brand: 'Test Brand',
+        series: 'Test Series'
+      },
+      brand: 'Test Brand',
+      modelNumber: 'TEST123',
+      serialNumber: 'SN123456',
+      symptoms: ['not cooling'],
+      answers: {}
+    });
+    console.log('AI Service Test:', testResult);
+  } catch (error) {
+    console.error('AI Service Error:', error);
+  }
+}
+
+// Call the test function where needed
+// testAIService(); 

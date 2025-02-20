@@ -1,127 +1,119 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { ThemedInput } from '../ThemedInput';
 import { ThemedButton } from '../ThemedButton';
 
-const COMMON_BRANDS = [
-  'Carrier',
-  'Trane',
-  'Lennox',
-  'Rheem',
-  'Goodman',
-  'York',
-  'American Standard',
-  'Bryant',
-  'Ruud',
-  'Amana',
-];
-
 interface Props {
+  selectedBrand: string;
   onSelect: (brand: string) => void;
-  selectedBrand?: string;
-  onCustomBrand?: (brand: string) => void;
-  recentBrands?: string[];
+  onCustomBrand: (brand: string) => void;
+  error?: string;
 }
 
-export function BrandSelection({ 
-  onSelect, 
-  selectedBrand, 
-  onCustomBrand,
-  recentBrands = [] 
-}: Props) {
+export function BrandSelection({ selectedBrand, onSelect, onCustomBrand, error }: Props) {
   const [customBrand, setCustomBrand] = useState('');
-  const allBrands = [...new Set([...recentBrands, ...COMMON_BRANDS])];
+  const [showCustomInput, setShowCustomInput] = useState(false);
+
+  const commonBrands = ['Carrier', 'Trane', 'Lennox', 'Rheem', 'Goodman'];
+
+  const handleCustomBrand = () => {
+    if (customBrand.trim()) {
+      onCustomBrand(customBrand.trim());
+    }
+  };
+
+  const handleBasicContinue = () => {
+    onSelect('Basic');
+    setShowCustomInput(false);
+  };
 
   return (
     <View style={styles.container}>
-      <ThemedText style={styles.title}>Select Brand</ThemedText>
-      
-      {recentBrands.length > 0 && (
-        <View style={styles.recentContainer}>
-          <ThemedText style={styles.recentTitle}>Recent Brands</ThemedText>
-          <View style={styles.recentBrands}>
-            {recentBrands.map((brand) => (
-              <ThemedButton
-                key={brand}
-                title={brand}
-                onPress={() => onSelect(brand)}
-                style={[
-                  styles.recentBrandButton,
-                  selectedBrand === brand && styles.selectedBrand,
-                ]}
-              />
-            ))}
-          </View>
-        </View>
-      )}
-      
-      <ThemedInput
-        placeholder="Type brand name"
-        value={customBrand}
-        onChangeText={(text) => {
-          setCustomBrand(text);
-          if (onCustomBrand) onCustomBrand(text);
-        }}
-        style={styles.input}
-      />
-
-      <ScrollView style={styles.brandList}>
-        {allBrands.map((brand) => (
+      <View style={styles.brandButtons}>
+        {commonBrands.map((brand) => (
           <ThemedButton
             key={brand}
             title={brand}
-            onPress={() => {
-              onSelect(brand);
-              setCustomBrand('');
-            }}
+            onPress={() => onSelect(brand)}
             style={[
               styles.brandButton,
-              selectedBrand === brand && styles.selectedBrand,
+              selectedBrand === brand && styles.selectedBrand
             ]}
           />
         ))}
-      </ScrollView>
+      </View>
+
+      {showCustomInput ? (
+        <View style={styles.customInputContainer}>
+          <ThemedInput
+            placeholder="Enter brand name"
+            value={customBrand}
+            onChangeText={setCustomBrand}
+            style={styles.customInput}
+          />
+          <ThemedButton
+            title="Add Brand"
+            onPress={handleCustomBrand}
+            style={styles.addButton}
+          />
+        </View>
+      ) : (
+        <View style={styles.actionButtons}>
+          <ThemedButton
+            title="Add Custom Brand"
+            onPress={() => setShowCustomInput(true)}
+            style={styles.actionButton}
+          />
+          <ThemedButton
+            title="Continue with Basic"
+            onPress={handleBasicContinue}
+            style={styles.actionButton}
+          />
+        </View>
+      )}
+
+      {error && <ThemedText style={styles.error}>{error}</ThemedText>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 16,
+    width: '100%',
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  input: {
-    marginBottom: 16,
-  },
-  brandList: {
-    maxHeight: 200,
-  },
-  brandButton: {
-    marginVertical: 4,
-  },
-  selectedBrand: {
-    backgroundColor: '#4CAF50',
-  },
-  recentContainer: {
-    marginBottom: 16,
-  },
-  recentTitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  recentBrands: {
+  brandButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 16,
   },
-  recentBrandButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  brandButton: {
+    marginBottom: 8,
+    minWidth: '45%',
+  },
+  selectedBrand: {
+    backgroundColor: '#007AFF',
+  },
+  customInputContainer: {
+    marginTop: 16,
+  },
+  customInput: {
+    marginBottom: 8,
+  },
+  addButton: {
+    marginTop: 8,
+  },
+  actionButtons: {
+    gap: 8,
+    marginTop: 16,
+  },
+  actionButton: {
+    width: '100%',
+  },
+  error: {
+    color: '#FF3B30',
+    fontSize: 14,
+    marginTop: 8,
   },
 }); 

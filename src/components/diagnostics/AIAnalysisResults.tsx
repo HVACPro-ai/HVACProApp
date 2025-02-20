@@ -3,38 +3,29 @@ import { View, StyleSheet, Animated } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 
-interface AIAnalysisProps {
-  results: {
-    diagnosis: string;
+export interface AIAnalysisResult {
+  diagnosis: string;
+  recommendations: string[];
+  partSuggestions?: string[];
+  confidence: number;
+  optimizations: {
+    potentialSavings: {
+      costPerMonth: number;
+      energyPercent: number;
+    };
+  };
+  imageAnalysis?: {
+    findings: string[];
     confidence: number;
-    severity: 'low' | 'medium' | 'high';
-    aiAnalysis: {
-      predictionAccuracy: number;
-      potentialRootCauses: string[];
-      failureProbability: number;
-      recommendedMaintenance: {
-        immediate: string[];
-        shortTerm: string[];
-        longTerm: string[];
-      };
-    };
-    imageAnalysis?: {
-      detectedIssues: Array<{
-        description: string;
-        severity: 'low' | 'medium' | 'high';
-        confidence: number;
-      }>;
-    };
-    optimizations?: {
-      potentialSavings: {
-        energyPercent: number;
-        costPerMonth: number;
-      };
-    };
   };
 }
 
-export function AIAnalysisResults({ results }: AIAnalysisProps) {
+export interface Props {
+  results: AIAnalysisResult;
+  onPartOrder: () => void;
+}
+
+export const AIAnalysisResults: React.FC<Props> = ({ results, onPartOrder }) => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'high':
@@ -72,7 +63,7 @@ export function AIAnalysisResults({ results }: AIAnalysisProps) {
 
       <View style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Root Causes</ThemedText>
-        {results.aiAnalysis.potentialRootCauses.map((cause, index) => (
+        {results.recommendations.map((cause, index) => (
           <View key={index} style={styles.causeItem}>
             <Ionicons name="analytics-outline" size={24} color="#007AFF" />
             <ThemedText style={styles.causeText}>{cause}</ThemedText>
@@ -83,12 +74,12 @@ export function AIAnalysisResults({ results }: AIAnalysisProps) {
       <View style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Recommended Actions</ThemedText>
         <View style={styles.timelineContainer}>
-          {results.aiAnalysis.recommendedMaintenance.immediate.length > 0 && (
+          {results.recommendations.length > 0 && (
             <View style={styles.timelineSection}>
               <ThemedText style={[styles.timelineTitle, { color: '#FF3B30' }]}>
                 Immediate
               </ThemedText>
-              {results.aiAnalysis.recommendedMaintenance.immediate.map((action, index) => (
+              {results.recommendations.map((action, index) => (
                 <View key={index} style={styles.actionItem}>
                   <Ionicons name="alert-circle" size={24} color="#FF3B30" />
                   <ThemedText style={styles.actionText}>{action}</ThemedText>
@@ -96,22 +87,20 @@ export function AIAnalysisResults({ results }: AIAnalysisProps) {
               ))}
             </View>
           )}
-
-          {results.aiAnalysis.recommendedMaintenance.shortTerm.length > 0 && (
-            <View style={styles.timelineSection}>
-              <ThemedText style={[styles.timelineTitle, { color: '#FF9500' }]}>
-                Short Term
-              </ThemedText>
-              {results.aiAnalysis.recommendedMaintenance.shortTerm.map((action, index) => (
-                <View key={index} style={styles.actionItem}>
-                  <Ionicons name="time" size={24} color="#FF9500" />
-                  <ThemedText style={styles.actionText}>{action}</ThemedText>
-                </View>
-              ))}
-            </View>
-          )}
         </View>
       </View>
+
+      {results.partSuggestions && (
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Part Suggestions</ThemedText>
+          {results.partSuggestions.map((suggestion, index) => (
+            <View key={index} style={styles.partSuggestionItem}>
+              <Ionicons name="build" size={24} color="#007AFF" />
+              <ThemedText style={styles.partSuggestionText}>{suggestion}</ThemedText>
+            </View>
+          ))}
+        </View>
+      )}
 
       {results.optimizations && (
         <View style={styles.section}>
@@ -128,7 +117,7 @@ export function AIAnalysisResults({ results }: AIAnalysisProps) {
       )}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -216,5 +205,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 4,
+  },
+  partSuggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  partSuggestionText: {
+    marginLeft: 12,
+    flex: 1,
   },
 }); 

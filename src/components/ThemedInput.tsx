@@ -1,40 +1,22 @@
 import React from 'react';
-import { TextInput, View, StyleSheet, KeyboardTypeOptions } from 'react-native';
+import { StyleSheet, TextInput, TextInputProps, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 
-interface Props {
+interface Props extends TextInputProps {
   label?: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  style?: any;
-  multiline?: boolean;
-  numberOfLines?: number;
-  keyboardType?: KeyboardTypeOptions;
+  error?: string;
 }
 
-export function ThemedInput({
-  label,
-  value = '',
-  onChangeText,
-  placeholder,
-  style,
-  multiline = false,
-  numberOfLines = 1,
-  keyboardType = 'default',
-}: Props) {
+export function ThemedInput({ label, error, style, ...props }: Props) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {label && <ThemedText style={styles.label}>{label}</ThemedText>}
       <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        style={[styles.input, multiline && styles.multilineInput, style]}
-        multiline={multiline}
-        numberOfLines={numberOfLines}
-        keyboardType={keyboardType}
+        style={[styles.input, error && styles.inputError]}
+        placeholderTextColor="#999"
+        {...props}
       />
+      {error && <ThemedText style={styles.error}>{error}</ThemedText>}
     </View>
   );
 }
@@ -42,25 +24,24 @@ export function ThemedInput({
 const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
-    width: '100%',
   },
   label: {
     fontSize: 16,
-    fontWeight: 'bold',
     marginBottom: 8,
-    color: '#333',
   },
   input: {
-    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    minHeight: 48,
   },
-  multilineInput: {
-    height: 'auto',
-    textAlignVertical: 'top',
+  inputError: {
+    borderColor: '#ff3b30',
+  },
+  error: {
+    color: '#ff3b30',
+    fontSize: 14,
+    marginTop: 4,
   },
 }); 

@@ -1,39 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, ScrollView, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native';
 import {
   ThemedView,
   ThemedText,
   ThemedInput,
-  ThemedButton
+  ThemedButton,
+  Card,
+  NavigationButtons,
+  OfflineBanner,
+  AnimatedStepTransition
 } from '../components';
-import { ImageUploader } from '../components/dashboard/ImageUploader';
+import { ImageUploader } from '../components/diagnostics/ImageUploader';
 import { StepProgress } from '../components/diagnostics/StepProgress';
-import { SensorDataInput, SensorData } from '../components/diagnostics/SensorDataInput';
+import { SensorDataInput } from '../components/diagnostics/SensorDataInput';
 import { AIAnalysisResults } from '../components/diagnostics/AIAnalysisResults';
 import { DiagnosticGuide } from '../components/diagnostics/DiagnosticGuide';
 import { fetchDiagnostics, analyzeEquipmentImages, getEfficiencyOptimizations } from '../api/diagnosticsApi';
 import { Ionicons } from '@expo/vector-icons';
-import type { ServiceImage, DiagnosticState, AIQuestion, OrderDetails, SystemSettings } from '../types';
+import type { ServiceImage, DiagnosticState, AIQuestion, OrderDetails, SystemSettings, SensorData } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BrandSelection } from '../components/diagnostics/BrandSelection';
 import { AIQuestionPrompt } from '../components/diagnostics/AIQuestionPrompt';
 import { TestingInstructions } from '../components/diagnostics/TestingInstructions';
-import { InventoryStatus } from '../components/diagnostics/InventoryStatus';
+import { InventoryStatus } from '../constants/inventory';
 import { AIDiagnosticService } from '../services/aiDiagnosticService';
 import { DiagnosticProgress } from '../components/diagnostics/DiagnosticProgress';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PartOrderForm } from '../components/diagnostics/PartOrderForm';
 import { PartOrderService } from '../services/partOrderService';
-import { AnimatedStepTransition } from '../components/diagnostics/AnimatedStepTransition';
 import { OrderTracking } from '../components/diagnostics/OrderTracking';
 import { StorageService } from '../services/storageService';
 import { DiagnosticHistory } from '../components/diagnostics/DiagnosticHistory';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { 
   DiagnosticHistoryItem,
-  TestingInstruction
+  TestingInstruction,
+  EquipmentTypeInfo
 } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { DiagnosticResponse, OptimizationSuggestions, ImageAnalysisResult } from '../api/diagnosticsApi';
+import VisualAid from '../../components/VisualAid';
 
 const DIAGNOSTIC_STEPS = [
   'Equipment Info',
@@ -46,19 +52,98 @@ interface DiagnosticsScreenProps {
   navigation: NativeStackNavigationProp<any>;
 }
 
+interface ImageUploaderProps {
+  images: ServiceImage[];
+  onImageAdded: (image: ServiceImage) => void;
+  onImageRemoved: (index: number) => void;
+}
+
+interface SensorDataInputProps {
+  data: SensorData;
+  onDataChange: (data: SensorData) => void;
+}
+
+interface AIAnalysisProps {
+  results: AIAnalysisResult;
+  onPartOrder: (partId: string) => void;
+}
+
+interface DiagnosticData extends DiagnosticState {
+  modelNumber: string;
+  serialNumber: string;
+  brand: string;
+  equipmentType: EquipmentTypeInfo;
+  images: ServiceImage[];
+  sensorData: SensorData;
+  symptoms: string[];
+  testingInstructions: TestingInstruction[];
+  answers: Record<string, string>;
+  currentQuestion?: AIQuestion;
+  confirmedIssue?: string;
+  resolution?: string;
+  inventoryStatus?: InventoryStatus;
+}
+
+// Type guard for EquipmentTypeInfo
+const isValidEquipment = (equipment: Partial<EquipmentTypeInfo>): equipment is EquipmentTypeInfo => {
+  return typeof equipment.id === 'string' &&
+         typeof equipment.name === 'string' &&
+         typeof equipment.category === 'string';
+};
+
+const createDefaultEquipment = (): EquipmentTypeInfo => ({
+  id: 'default-equipment',
+  name: 'Unknown Equipment',
+  category: 'General'
+});
+
+// Fix the type conflicts between DiagnosticState and DiagnosticData
+interface LocalDiagnosticState extends Partial<DiagnosticData> {
+  inventoryStatus?: typeof InventoryStatus[keyof typeof InventoryStatus];
+}
+
 export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [diagnosticData, setDiagnosticData] = useState<DiagnosticState>({
-    modelNumber: '',
-    serialNumber: '',
-    brand: '',
-    symptoms: [],
-    images: [],
-    testingInstructions: [],
-    answers: {},
-  });
-  const [results, setResults] = useState<any>(null);
+  const defaultEquipment = createDefaultEquipment();
+  const [modelNumber, setModelNumber] = useState('');
+  const [serialNumber, setSerialNumber] = useState('');
+  const [errorCode, setErrorCode] = useState('');
+  const [userComments, setUserComments] = useState('');
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  const createDiagnosticData = (partial: Partial<DiagnosticData>): DiagnosticData => {
+    const equipment: EquipmentTypeInfo = {
+      id: '1',
+      name: 'AC Unit',
+      category: 'Cooling',
+      // other properties...
+    };
+
+    return {
+      modelNumber: '',
+      serialNumber: '',
+      brand: '',
+      equipmentType: equipment,
+      images: [] as ServiceImage[],  // Explicitly type as non-undefined array
+      sensorData: {
+        temperature: 0,
+        pressure: 0,
+        humidity: 0,
+        airflow: 0,
+        powerConsumption: 0
+      },
+      symptoms: [],
+      testingInstructions: [],
+      answers: {},
+      ...partial,
+      equipmentType: equipment  // Ensure equipment is always set
+    };
+  };
+
+  const [diagnosticData, setDiagnosticData] = useState<DiagnosticData>(createDiagnosticData({}));
+  const [results, setResults] = useState<AIAnalysisResult | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isValid, setIsValid] = useState(false);
   const [showGuide, setShowGuide] = useState(true);
@@ -73,6 +158,19 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
   const [isOffline, setIsOffline] = useState(false);
   const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
 
+  const defaultSystemSettings: SystemSettings = {
+    ...diagnosticData.sensorData,
+    fanSpeed: 0,
+    mode: 'auto',
+    schedule: {
+      default: {
+        targetTemp: 72,
+        startTime: '00:00',
+        endTime: '23:59'
+      }
+    }
+  };
+
   useEffect(() => {
     loadHistory();
     const unsubscribe = setupNetworkListener();
@@ -82,7 +180,7 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
 
   useEffect(() => {
     validateStep();
-  }, [step, diagnosticData.modelNumber, diagnosticData.serialNumber, diagnosticData.brand, diagnosticData.symptoms.length]);
+  }, [step, diagnosticData.modelNumber, diagnosticData.serialNumber, diagnosticData.brand, diagnosticData.images.length]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -123,14 +221,14 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
         }
         break;
       case 2:
-        if (!diagnosticData.symptoms.length) {
-          newErrors.symptoms = 'At least one symptom is required';
+        if (!diagnosticData.images.length) {
+          newErrors.images = 'At least one image is required';
           valid = false;
         }
         break;
       case 3:
-        if (!diagnosticData.images && !diagnosticData.sensorData) {
-          newErrors.data = 'Please provide either images or sensor data';
+        if (!diagnosticData.sensorData) {
+          newErrors.sensorData = 'Sensor data is required';
           valid = false;
         }
         break;
@@ -141,20 +239,20 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
   };
 
   const handleImageUpload = (image: ServiceImage) => {
-    setDiagnosticData((prev: DiagnosticState) => ({
+    setDiagnosticData((prev: DiagnosticData) => ({
       ...prev,
-      images: [...(prev.images || []), image]
+      images: [...prev.images, image]
     }));
   };
 
   const handleSymptomChange = (text: string) => {
-    setDiagnosticData((prev: DiagnosticState) => ({
+    setDiagnosticData((prev: DiagnosticData) => ({
       ...prev,
       symptoms: text.split(',').map((symptom: string) => symptom.trim())
     }));
   };
 
-  const handleInputChange = (field: keyof DiagnosticState, value: any) => {
+  const handleInputChange = (field: keyof DiagnosticData, value: any) => {
     setDiagnosticData(prev => {
       const newData = { ...prev, [field]: value };
       
@@ -190,47 +288,44 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
   const handleDiagnosis = async () => {
     setLoading(true);
     try {
-      let imageAnalysis;
+      let imageAnalysis: ImageAnalysisResult | undefined;
       if (diagnosticData.images && diagnosticData.images.length > 0) {
         imageAnalysis = await analyzeEquipmentImages(diagnosticData.images);
       }
 
-      const diagnosis = await fetchDiagnostics(
-        diagnosticData.modelNumber,
-        diagnosticData.serialNumber,
+      const diagnosis: DiagnosticResponse = await fetchDiagnostics(
+        modelNumber,
+        serialNumber,
         diagnosticData.symptoms,
-        diagnosticData.sensorData,
-        diagnosticData.images?.map(img => img.uri) || []
+        defaultSystemSettings,
+        diagnosticData.images.map(img => img.uri)
       );
 
-      let optimizations;
-      if (diagnosticData.sensorData) {
-        const systemSettings: SystemSettings = {
-          ...diagnosticData.sensorData,
-          fanSpeed: 0,
-          mode: 'auto' as const,
-          schedule: {
-            default: {
-              targetTemp: 72,
-              startTime: '00:00',
-              endTime: '23:59'
-            }
-          }
-        };
-        
-        optimizations = await getEfficiencyOptimizations(
-          diagnosticData.modelNumber,
-          diagnosticData.serialNumber,
-          systemSettings
-        );
-      }
+      const optimizations: OptimizationSuggestions = await getEfficiencyOptimizations(
+        modelNumber,
+        serialNumber,
+        defaultSystemSettings
+      );
 
       setResults({
-        ...diagnosis,
-        imageAnalysis,
-        optimizations
+        diagnosis: diagnosis.diagnosis,
+        recommendations: diagnosis.recommendedActions,
+        partSuggestions: diagnosis.suggestedParts,
+        confidence: diagnosis.confidence,
+        imageAnalysis: imageAnalysis ? {
+          findings: imageAnalysis.findings,
+          confidence: imageAnalysis.confidence
+        } : undefined,
+        optimizations: {
+          potentialSavings: {
+            costPerMonth: optimizations.savings.monthly,
+            energyPercent: optimizations.savings.energyReductionPercent
+          }
+        }
       });
       setStep(4);
+      setQuestions(diagnosis.questions);
+      setSuggestions(diagnosis.suggestions);
     } catch (error) {
       handleError(error);
     } finally {
@@ -269,9 +364,9 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
   };
 
   const removeImage = (uri: string, index: number): void => {
-    setDiagnosticData((prev: DiagnosticState) => ({
+    setDiagnosticData((prev: DiagnosticData) => ({
       ...prev,
-      images: (prev.images || []).filter((img: ServiceImage, i: number) => i !== index)
+      images: prev.images.filter((img: ServiceImage, i: number) => i !== index)
     }));
   };
 
@@ -355,7 +450,17 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
   const loadSavedDiagnostic = async () => {
     const savedData = await StorageService.getDiagnosticData();
     if (savedData) {
-      setDiagnosticData(savedData);
+      // Ensure all required fields are present before setting state
+      const validatedData: DiagnosticData = {
+        ...savedData,
+        equipmentType: savedData.equipmentType || {
+          name: '',
+          manufacturer: '',
+          model: '',
+          serialNumber: ''
+        }
+      };
+      setDiagnosticData(validatedData);
     }
   };
 
@@ -410,44 +515,116 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
     }
   };
 
+  const startAnalysis = async () => {
+    try {
+      setLoading(true);
+      const aiService = AIDiagnosticService.getInstance();
+      // Convert diagnosticData to DiagnosticState format
+      const diagnosticState = {
+        ...diagnosticData,
+        equipmentType: diagnosticData.equipmentType
+      };
+      const analysisResults = await aiService.getDiagnosis(diagnosticState);
+      // Add required optimizations field if missing
+      const resultsWithOptimizations = {
+        ...analysisResults,
+        optimizations: []
+      };
+      setResults(resultsWithOptimizations);
+    } catch (error) {
+      console.error('Analysis error:', error);
+      setError('Failed to analyze data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDiagnosticState = (state: LocalDiagnosticState): DiagnosticData => {
+    return {
+      ...diagnosticData,
+      ...state,
+      equipmentType: state.equipmentType || defaultEquipment
+    };
+  };
+
+  const handleEquipmentTypeChange = (type: EquipmentTypeInfo) => {
+    setDiagnosticData(prev => ({
+      ...prev,
+      equipmentType: type
+    }));
+  };
+
+  const handleEquipmentUpdate = useCallback((equipment: Partial<EquipmentTypeInfo>) => {
+    const updatedEquipment: EquipmentTypeInfo = {
+      id: equipment.id || defaultEquipment.id,
+      name: equipment.name || defaultEquipment.name,
+      category: equipment.category || defaultEquipment.category,
+      manufacturer: equipment.manufacturer,
+      model: equipment.model,
+      serialNumber: equipment.serialNumber
+    };
+    
+    updateDiagnosticData({
+      equipmentType: updatedEquipment
+    });
+  }, [updateDiagnosticData]);
+
+  const updateDiagnosticData = useCallback((update: Partial<DiagnosticData>) => {
+    setDiagnosticData(prev => createDiagnosticData({
+      ...prev,
+      ...update
+    }));
+  }, []);
+
+  const updateInventoryStatus = (status: typeof InventoryStatus[keyof typeof InventoryStatus]) => {
+    setDiagnosticData(prev => ({
+      ...prev,
+      inventoryStatus: status
+    }));
+  };
+
   function renderEquipmentInfo() {
     return (
-      <View style={styles.stepContainer}>
-        <ScrollView style={styles.scrollContent}>
-          <View style={styles.inputContainer}>
-            <ThemedInput
-              label="Model Number"
-              value={diagnosticData.modelNumber}
-              onChangeText={(text) => handleInputChange('modelNumber', text)}
-              placeholder="Enter model number"
-              style={styles.inputField}
-            />
-            
-            <ThemedInput
-              label="Serial Number"
-              value={diagnosticData.serialNumber}
-              onChangeText={(text) => handleInputChange('serialNumber', text)}
-              placeholder="Enter serial number"
-              style={styles.inputField}
-            />
-            
-            <View style={styles.brandContainer}>
-              <ThemedText style={styles.label}>Brand</ThemedText>
-              <BrandSelection
-                selectedBrand={diagnosticData.brand}
-                onSelect={(brand) => handleInputChange('brand', brand)}
-                onCustomBrand={(brand) => handleInputChange('brand', brand)}
-              />
-            </View>
+      <View style={styles.stepContent}>
+        <View style={styles.formContainer}>
+          <ThemedText style={styles.stepTitle}>Equipment Info</ThemedText>
+          <View style={styles.progressContainer}>
+            <ThemedText style={styles.stepIndicator}>Step 1 of 4</ThemedText>
           </View>
-        </ScrollView>
-        
-        <View style={styles.buttonContainer}>
-          <ThemedButton
-            title="Next"
-            onPress={handleNextStep}
-            disabled={!isValid}
+          
+          <ThemedInput
+            label="Model Number"
+            value={modelNumber}
+            onChangeText={setModelNumber}
+            placeholder="Enter model number"
+            error={errors.modelNumber}
           />
+          
+          <ThemedInput
+            label="Serial Number"
+            value={serialNumber}
+            onChangeText={setSerialNumber}
+            placeholder="Enter serial number"
+            error={errors.serialNumber}
+          />
+          
+          <ThemedInput
+            label="Error Code"
+            value={errorCode}
+            onChangeText={setErrorCode}
+            placeholder="Enter error code"
+            error={errors.errorCode}
+          />
+          
+          <View style={styles.brandSection}>
+            <ThemedText style={styles.label}>Brand</ThemedText>
+            <BrandSelection
+              selectedBrand={diagnosticData.brand}
+              onSelect={(brand) => handleInputChange('brand', brand)}
+              onCustomBrand={(brand) => handleInputChange('brand', brand)}
+              error={errors.brand}
+            />
+          </View>
         </View>
       </View>
     );
@@ -499,8 +676,15 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
       <View style={styles.featureSection}>
         <ThemedText style={styles.sectionTitle}>Images</ThemedText>
         <ImageUploader 
-          onImageCaptured={handleImageUpload}
-          disabled={loading}
+          images={diagnosticData.images}
+          onImageAdded={(image: ServiceImage) => 
+            handleInputChange('images', [...diagnosticData.images, image])
+          }
+          onImageRemoved={(index: number) => {
+            const newImages = [...diagnosticData.images];
+            newImages.splice(index, 1);
+            handleInputChange('images', newImages);
+          }}
         />
         {diagnosticData.images && diagnosticData.images.length > 0 && (
           <View style={styles.imagePreviewContainer}>
@@ -522,14 +706,10 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
       <View style={styles.featureSection}>
         <ThemedText style={styles.sectionTitle}>Sensor Readings</ThemedText>
         <SensorDataInput
-          currentData={diagnosticData.sensorData || {
-            temperature: 0,
-            pressure: 0,
-            humidity: 0,
-            airflow: 0,
-            powerConsumption: 0,
-          }}
-          onDataChange={handleSensorDataChange}
+          data={diagnosticData.sensorData}
+          onDataChange={(data: Partial<SensorData>) => 
+            handleInputChange('sensorData', data)
+          }
         />
       </View>
     </View>
@@ -538,20 +718,101 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
   const renderResults = () => (
     <View style={styles.stepContainer}>
       <ThemedText style={styles.stepTitle}>AI Analysis Results</ThemedText>
-      {results && <AIAnalysisResults results={results} />}
+      {results && <AIAnalysisResults results={results} onPartOrder={handleOrderPart} />}
     </View>
   );
+
+  function renderImagesAndData() {
+    return (
+      <View style={styles.stepContent}>
+        <View style={styles.formContainer}>
+          <ThemedText style={styles.stepTitle}>Images & Data</ThemedText>
+          <View style={styles.progressContainer}>
+            <ThemedText style={styles.stepIndicator}>Step 3 of 4</ThemedText>
+          </View>
+          
+          <ImageUploader
+            images={diagnosticData.images}
+            onImageAdded={(image: ServiceImage) => 
+              handleInputChange('images', [...diagnosticData.images, image])
+            }
+            onImageRemoved={(index: number) => {
+              const newImages = [...diagnosticData.images];
+              newImages.splice(index, 1);
+              handleInputChange('images', newImages);
+            }}
+          />
+
+          <SensorDataInput
+            data={diagnosticData.sensorData}
+            onDataChange={(data: Partial<SensorData>) => 
+              handleInputChange('sensorData', data)
+            }
+          />
+        </View>
+      </View>
+    );
+  }
+
+  function renderAIAnalysis() {
+    return (
+      <View style={styles.stepContent}>
+        <View style={styles.formContainer}>
+          <ThemedText style={styles.stepTitle}>AI Analysis</ThemedText>
+          <View style={styles.progressContainer}>
+            <ThemedText style={styles.stepIndicator}>Step 4 of 4</ThemedText>
+          </View>
+          
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <ThemedText style={styles.loadingText}>Analyzing data...</ThemedText>
+            </View>
+          ) : results ? (
+            <AIAnalysisResults 
+              results={results}
+              onPartOrder={handleOrderPart}
+            />
+          ) : (
+            <View style={styles.startAnalysisContainer}>
+              <ThemedButton
+                title="Start Analysis"
+                onPress={startAnalysis}
+                disabled={!isValid}
+              />
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  }
 
   const renderStep = () => {
     switch (step) {
       case 1:
-        return renderEquipmentInfo();
+        return (
+          <View style={styles.stepContainer}>
+            {renderEquipmentInfo()}
+          </View>
+        );
       case 2:
-        return renderSymptoms();
+        return (
+          <View style={styles.stepContainer}>
+            {renderSymptoms()}
+          </View>
+        );
       case 3:
-        return showAdvancedFeatures ? renderAdvancedDiagnostics() : renderBasicDiagnostics();
+        return (
+          <View style={styles.stepContainer}>
+            {renderImagesAndData()}
+          </View>
+        );
       case 4:
-        return renderResults();
+        return (
+          <View style={styles.stepContainer}>
+            {renderAIAnalysis()}
+          </View>
+        );
       case 5:
         return (
           <View style={styles.stepContainer}>
@@ -575,6 +836,8 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
             )}
           </View>
         );
+      default:
+        return null;
     }
   };
 
@@ -590,117 +853,78 @@ export default function DiagnosticsScreen({ navigation }: DiagnosticsScreenProps
   );
 
   return (
-    <ErrorBoundary>
-      <ThemedView style={styles.container}>
-        {isOffline && (
-          <View style={styles.offlineBanner}>
-            <ThemedText style={styles.offlineText}>
-              You are offline. Changes will be saved locally.
-            </ThemedText>
-          </View>
-        )}
-
-        <DiagnosticProgress
-          currentStep={step}
-          totalSteps={DIAGNOSTIC_STEPS.length}
-          title={DIAGNOSTIC_STEPS[step - 1]}
-        />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {isOffline && <OfflineBanner />}
         
-        <AnimatedStepTransition
-          visible={true}
-          direction={transitionDirection}
-        >
-          {currentOrderId ? (
-            <OrderTracking
-              orderId={currentOrderId}
-              onClose={() => setCurrentOrderId(null)}
-            />
-          ) : showOrderForm ? (
-            <PartOrderForm
-              partNumber={diagnosticData.inventoryStatus?.partNumber || ''}
-              partName={diagnosticData.inventoryStatus?.partName || ''}
-              onSubmit={handleOrderPart}
-              onCancel={() => setShowOrderForm(false)}
-            />
-          ) : showHistory ? (
-            <DiagnosticHistory
-              history={history}
-              onSelectDiagnostic={handleSelectHistoryItem}
-            />
-          ) : (
-            renderStep()
-          )}
-        </AnimatedStepTransition>
-
-        <View style={styles.buttonContainer}>
-          {step > 1 && (
-            <ThemedButton
-              title="Previous"
-              onPress={handlePreviousStep}
-              style={styles.button}
-              disabled={loading}
-            />
-          )}
-          <ThemedButton
-            title={step === 3 ? "Analyze" : step === 4 ? "Start Over" : "Next"}
-            onPress={handleNextStep}
-            style={styles.button}
-            loading={loading}
-            disabled={!isValid || loading}
-          />
+        <View style={styles.mainContent}>
+          {renderStep()}
         </View>
 
-        <DiagnosticGuide
-          visible={showGuide}
-          onClose={handleGuideClose}
-          currentStep={step}
-        />
-      </ThemedView>
-    </ErrorBoundary>
+        <View style={styles.footer}>
+          <ThemedButton
+            title="Next"
+            onPress={handleNextStep}
+            disabled={!isValid}
+          />
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f5f7fa',
+  },
   container: {
     flex: 1,
   },
-  scrollView: {
+  mainContent: {
     flex: 1,
+    padding: 16,
   },
   stepContainer: {
     flex: 1,
-    position: 'relative',
+    width: '100%',
   },
-  scrollContent: {
+  stepContent: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 80, // Add padding for button
   },
-  inputContainer: {
-    paddingTop: 16,
-    paddingBottom: 80, // Space for button
+  formContainer: {
+    width: '100%',
   },
-  inputField: {
+  stepTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  progressContainer: {
     marginBottom: 24,
   },
-  brandContainer: {
-    marginBottom: 24,
+  stepIndicator: {
+    fontSize: 16,
+    color: '#666',
   },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  brandSection: {
+    marginTop: 16,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  footer: {
     padding: 16,
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
   },
-  stepTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 16,
-    marginTop: 16,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
   },
   symptomsInput: {
     height: 120,
@@ -714,14 +938,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 24,
-    gap: 16,
+    paddingHorizontal: 16,
+    width: '100%',
   },
   button: {
     flex: 1,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
   },
   resultSection: {
     marginBottom: 20,
@@ -794,12 +1015,6 @@ const styles = StyleSheet.create({
   helpButton: {
     marginRight: 16,
   },
-  progressContainer: {
-    padding: 16,
-    backgroundColor: '#f8f9fa',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
   progressText: {
     fontSize: 14,
     color: '#666',
@@ -820,9 +1035,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007AFF',
   },
-  content: {
-    flex: 1,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -835,15 +1047,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
   },
-  offlineBanner: {
-    backgroundColor: '#FFD700',
-    padding: 8,
-    alignItems: 'center',
-  },
-  offlineText: {
-    color: '#000',
-  },
   featureSection: {
     marginBottom: 24,
+  },
+  startAnalysisContainer: {
+    marginTop: 24,
+    alignItems: 'center',
   },
 });

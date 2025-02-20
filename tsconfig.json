@@ -1,21 +1,10 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "target": "es2017",
-    "module": "commonjs",
-    "lib": [
-      "es2017",
-      "dom"
-    ],
-    "jsx": "react-native",
     "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
     "baseUrl": ".",
+    "module": "esnext",
+    "target": "es2017",
     "paths": {
       "@/*": ["./*"],
       "@/components/*": ["./components/*"],
@@ -34,6 +23,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }

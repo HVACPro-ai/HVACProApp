@@ -3,26 +3,18 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { ThemedInput } from '../ThemedInput';
 import { Ionicons } from '@expo/vector-icons';
-
-export interface SensorData {
-  temperature: number;
-  pressure: number;
-  humidity: number;
-  airflow: number;
-  powerConsumption: number;
-  noiseLevel?: number;
-}
-
-interface Props {
-  onDataChange: (data: Partial<SensorData>) => void;
-  currentData: Partial<SensorData>;
-}
+import { SensorData } from '../../types';
 
 interface ValidationErrors {
   [key: string]: string;
 }
 
-export function SensorDataInput({ onDataChange, currentData }: Props) {
+export interface Props {
+  data: Partial<SensorData>;
+  onDataChange: (data: Partial<SensorData>) => void;
+}
+
+export function SensorDataInput({ data, onDataChange }: Props) {
   const [errors, setErrors] = useState<ValidationErrors>({});
 
   const validateField = (key: string, value: number): string => {
@@ -68,7 +60,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Temperature (°F)"
             keyboardType="numeric"
-            value={(currentData.temperature?.toString() || '')}
+            value={(data.temperature?.toString() || '')}
             onChangeText={(value) => handleChange('temperature', value)}
             style={styles.input}
           />
@@ -79,7 +71,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Pressure (PSI)"
             keyboardType="numeric"
-            value={currentData.pressure?.toString() || ''}
+            value={data.pressure?.toString() || ''}
             onChangeText={(value) => handleChange('pressure', value)}
             style={styles.input}
           />
@@ -90,7 +82,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Humidity (%)"
             keyboardType="numeric"
-            value={currentData.humidity?.toString() || ''}
+            value={data.humidity?.toString() || ''}
             onChangeText={(value) => handleChange('humidity', value)}
             style={styles.input}
           />
@@ -101,7 +93,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Airflow (CFM)"
             keyboardType="numeric"
-            value={currentData.airflow?.toString() || ''}
+            value={data.airflow?.toString() || ''}
             onChangeText={(value) => handleChange('airflow', value)}
             style={styles.input}
           />
@@ -112,7 +104,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Power (kW)"
             keyboardType="numeric"
-            value={currentData.powerConsumption?.toString() || ''}
+            value={data.powerConsumption?.toString() || ''}
             onChangeText={(value) => handleChange('powerConsumption', value)}
             style={styles.input}
           />
@@ -123,7 +115,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Noise (dB)"
             keyboardType="numeric"
-            value={currentData.noiseLevel?.toString() || ''}
+            value={data.noiseLevel?.toString() || ''}
             onChangeText={(value) => handleChange('noiseLevel', value)}
             style={styles.input}
           />

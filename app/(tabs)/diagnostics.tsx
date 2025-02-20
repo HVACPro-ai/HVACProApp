@@ -1,15 +1,8 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedInput } from '@/components/ThemedInput';
-import { ThemedButton } from '@/components/ThemedButton';
-import { fetchDiagnostics } from '@/src/api/diagnosticsApi';
+import React from 'react';
+import { StyleSheet } from 'react-native';
 import DiagnosticsScreen from '../../src/screens/DiagnosticsScreen';
 import { useNavigation } from 'expo-router';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
-type DiagnosticStep = 'initial' | 'details' | 'symptoms' | 'results';
 
 export default function DiagnosticsPage() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();

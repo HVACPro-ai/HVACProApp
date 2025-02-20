@@ -1,9 +1,17 @@
+import { InventoryStatus } from '../constants/inventory';
+
 // Equipment Types
 export interface EquipmentTypeInfo {
-  type: 'furnace' | 'ac' | 'minisplit';
-  brand: string;
-  series?: string;
+  id: string;
+  name: string;
+  category: string;
+  manufacturer?: string;
+  model?: string;
+  serialNumber?: string;
 }
+
+// Re-export the InventoryStatus to avoid type conflicts
+export { InventoryStatus } from '../constants/inventory';
 
 // Diagnostic Types
 export interface SensorData {
@@ -12,7 +20,6 @@ export interface SensorData {
   humidity: number;
   airflow: number;
   powerConsumption: number;
-  noiseLevel?: number;
 }
 
 export interface DiagnosticContext {
@@ -33,28 +40,28 @@ export interface DiagnosticContext {
   };
 }
 
-export interface DiagnosticState {
-  equipmentType?: EquipmentTypeInfo;
-  brand: string;
+export interface DiagnosticData {
   modelNumber: string;
   serialNumber: string;
+  brand: string;
+  equipmentType: EquipmentTypeInfo;
+  images: ServiceImage[];
+  sensorData: SensorData;
   symptoms: string[];
+  testingInstructions: TestingInstruction[];
   answers: Record<string, string>;
-  sensorData?: Partial<SensorData>;
+  currentQuestion?: AIQuestion;
   confirmedIssue?: string;
+  resolution?: string;
+  inventoryStatus?: InventoryStatus;
+}
+
+export interface DiagnosticHistoryItem extends DiagnosticData {
+  id: string;
+  timestamp: number;
 }
 
 // Analysis Types
-export interface AIAnalysisResult {
-  issue: string;
-  confidence: number;
-  explanation: string;
-  testingInstructions: TestingInstruction[];
-  recommendedParts: RecommendedPart[];
-  safetyNotes: string[];
-  additionalRecommendations: string[];
-}
-
 export interface SensorAnalysis {
   anomalies: string[];
   recommendations: string[];
@@ -80,10 +87,9 @@ export interface ImageAnalysis {
 
 // Supporting Types
 export interface TestingInstruction {
-  step: number;
-  description: string;
-  warningNote?: string;
-  completed: boolean;
+  id: string;
+  text: string;
+  imageUrl?: string;
 }
 
 export interface RecommendedPart {
@@ -99,25 +105,10 @@ export interface RecommendedPart {
 export interface AIQuestion {
   id: string;
   text: string;
-  type: 'yes_no' | 'multiple_choice' | 'text';
-  options: string[];
-  nextQuestionMap: Record<string, string>;
+  options?: string[];
 }
 
 // Type Guards
-export function isAIAnalysisResult(obj: any): obj is AIAnalysisResult {
-  return (
-    obj &&
-    typeof obj.issue === 'string' &&
-    typeof obj.confidence === 'number' &&
-    typeof obj.explanation === 'string' &&
-    Array.isArray(obj.testingInstructions) &&
-    Array.isArray(obj.recommendedParts) &&
-    Array.isArray(obj.safetyNotes) &&
-    Array.isArray(obj.additionalRecommendations)
-  );
-}
-
 export function isSensorAnalysis(obj: any): obj is SensorAnalysis {
   return (
     obj &&
@@ -146,4 +137,34 @@ export function isDiagnosticContext(obj: any): obj is DiagnosticContext {
     Array.isArray(obj.symptoms) &&
     typeof obj.answers === 'object'
   );
+}
+
+// Add or update these types
+export interface ServiceImage {
+  uri: string;
+  type: string;
+  name: string;
+}
+
+export interface ImageAnalysisResult {
+  findings: string[];
+  confidence: number;
+  detectedIssues: string[];
+}
+
+export interface SystemSettings {
+  temperature: number;
+  pressure: number;
+  humidity: number;
+  airflow: number;
+  powerConsumption: number;
+  fanSpeed: number;
+  mode: 'auto' | 'heat' | 'cool' | 'fan';
+  schedule: {
+    [key: string]: {
+      targetTemp: number;
+      startTime: string;
+      endTime: string;
+    };
+  };
 } 

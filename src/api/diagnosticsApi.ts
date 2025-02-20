@@ -25,33 +25,11 @@ interface DiagnosticRequest {
   };
 }
 
-interface DiagnosticResponse {
+export interface DiagnosticResponse {
   diagnosis: string;
-  confidence: number;
   recommendedActions: string[];
-  estimatedCost?: number;
-  partsSuggested?: string[];
-  severity: 'low' | 'medium' | 'high';
-  aiAnalysis: {
-    predictionAccuracy: number;
-    potentialRootCauses: string[];
-    failureProbability: number;
-    recommendedMaintenance: {
-      immediate: string[];
-      shortTerm: string[];
-      longTerm: string[];
-    };
-    similarCases?: {
-      description: string;
-      resolution: string;
-      successRate: number;
-    }[];
-    energyEfficiencyImpact?: {
-      current: number;
-      afterFix: number;
-      potentialSavings: number;
-    };
-  };
+  suggestedParts: string[];
+  confidence: number;
 }
 
 // Enhanced diagnostic functions
@@ -107,15 +85,10 @@ export const analyzeEquipmentImages = async (images: ServiceImage[]): Promise<Im
   return response.data;
 };
 
-interface ImageAnalysisResult {
-  detectedIssues: {
-    description: string;
-    location: string;
-    confidence: number;
-    severity: 'low' | 'medium' | 'high';
-  }[];
-  recommendations: string[];
-  requiresExpertReview: boolean;
+export interface ImageAnalysisResult {
+  findings: string[];
+  confidence: number;
+  detectedIssues: string[];
 }
 
 // Function to get efficiency optimization suggestions
@@ -145,15 +118,10 @@ interface SystemSettings {
   };
 }
 
-interface OptimizationSuggestions {
-  recommendedSettings: SystemSettings;
-  potentialSavings: {
-    energyPercent: number;
-    costPerMonth: number;
-  };
-  comfort: {
-    impact: 'none' | 'minimal' | 'moderate' | 'significant';
-    details: string;
+export interface OptimizationSuggestions {
+  savings: {
+    monthly: number;
+    energyReductionPercent: number;
   };
 }
 
