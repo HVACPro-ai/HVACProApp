@@ -11,6 +11,16 @@ export interface ServiceCall {
   description: string;
 }
 
+export interface ServiceCallWithStatus {
+  id: string;
+  customerName: string;
+  address: string;
+  phoneNumber: string;
+  description: string;
+  date: string;
+  status: 'pending' | 'in_progress' | 'completed';
+}
+
 export const registerUser = async (username: string, password: string) => {
   const response = await axios.post(`${API_URL}/register`, { username, password });
   return response.data;
@@ -46,4 +56,14 @@ export const fetchServiceCalls = async (): Promise<ServiceCall[]> => {
       description: 'Heating system maintenance',
     },
   ];
-}; 
+};
+
+export async function getServiceCalls(): Promise<ServiceCallWithStatus[]> {
+  // Implement your API call here
+  return Promise.resolve([]);
+}
+
+export async function updateServiceCall(id: string, updates: Partial<ServiceCallWithStatus>) {
+  // Implement your API call here
+  return Promise.resolve({ success: true });
+} 

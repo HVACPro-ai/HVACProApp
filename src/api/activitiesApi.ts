@@ -1,4 +1,6 @@
-export const getRecentActivities = async () => {
+import { Activity } from '@/src/hooks/useDashboardData';
+
+export const getRecentActivities = async (): Promise<Activity[]> => {
   // Simulated API call
   await new Promise(resolve => setTimeout(resolve, 1000));
   
@@ -18,5 +20,5 @@ export const getRecentActivities = async () => {
       status: 'scheduled',
     },
     // Add more mock activities as needed
-  ];
+  ] as Activity[];
 }; 

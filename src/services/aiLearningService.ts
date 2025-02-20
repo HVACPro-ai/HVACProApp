@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { DiagnosticState, AIAnalysisResult, EquipmentTypeInfo } from '../types';
+import type { DiagnosticState, AIAnalysisResult, EquipmentTypeInfo } from '../types/index';
 
 interface DiagnosticFeedback {
   diagnosticId: string;
@@ -195,4 +195,37 @@ export class AILearningService {
       )
     };
   }
+
+  public async trainModel(historicalData: DiagnosticState[]): Promise<void> {
+    // Implementation
+  }
+
+  public async getPrediction(data: DiagnosticState): Promise<AIAnalysisResult> {
+    return {
+      issue: '',
+      confidence: 0,
+      explanation: '',
+      testingInstructions: [],
+      recommendedParts: [],
+      safetyNotes: [],
+      additionalRecommendations: []
+    };
+  }
+}
+
+export async function trainModel(historicalData: DiagnosticState[]): Promise<void> {
+  // Implementation
+}
+
+export async function getPrediction(data: DiagnosticState): Promise<AIAnalysisResult> {
+  // Implementation
+  return {
+    issue: '',
+    confidence: 0,
+    explanation: '',
+    testingInstructions: [],
+    recommendedParts: [],
+    safetyNotes: [],
+    additionalRecommendations: []
+  };
 } 

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { ServiceImage } from '../types';
+import { DiagnosticState } from '../types';
 
 const API_URL = 'https://your-backend-url.com/api'; // Replace with your backend URL
 
@@ -154,4 +155,14 @@ interface OptimizationSuggestions {
     impact: 'none' | 'minimal' | 'moderate' | 'significant';
     details: string;
   };
+}
+
+export async function submitDiagnostic(diagnostic: DiagnosticState) {
+  // Implement your API call here
+  return Promise.resolve({ success: true });
+}
+
+export async function getDiagnostics() {
+  // Implement your API call here
+  return Promise.resolve([]);
 } 

@@ -1,31 +1,30 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
+import { Pressable, Text, StyleSheet, PressableProps, StyleProp, ViewStyle } from 'react-native';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
-export interface ThemedButtonProps {
+export type ThemedButtonProps = Omit<PressableProps, 'style'> & {
   title: string;
-  onPress: () => void;
-  disabled?: boolean;
-  style?: object;
-}
+  lightColor?: string;
+  darkColor?: string;
+  style?: StyleProp<ViewStyle>;
+};
 
-export function ThemedButton({ title, onPress, disabled, style }: ThemedButtonProps) {
-  const { theme } = useTheme();
+export function ThemedButton(props: ThemedButtonProps) {
+  const { style, lightColor, darkColor, title, ...otherProps } = props;
+  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'primary');
+  const color = useThemeColor({ light: '#fff', dark: '#fff' }, 'text');
 
   return (
-    <TouchableOpacity 
-      style={[
-        styles.button, 
-        { backgroundColor: disabled ? '#cccccc' : theme.primary },
+    <Pressable 
+      {...otherProps}
+      style={({ pressed }) => [
+        styles.button,
+        { backgroundColor: pressed ? `${backgroundColor}80` : backgroundColor },
         style
       ]}
-      onPress={onPress}
-      disabled={disabled}
     >
-      <Text style={[styles.text, { color: theme.background }]}>
-        {title}
-      </Text>
-    </TouchableOpacity>
+      <Text style={[styles.text, { color }]}>{title}</Text>
+    </Pressable>
   );
 }
 
@@ -35,7 +34,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 100,
   },
   text: {
     fontSize: 16,

@@ -53,9 +53,8 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
 
     if (!error) {
       onDataChange({
-        ...currentData,
         [key]: numValue,
-      } as SensorData);
+      });
     }
   };
 
@@ -69,7 +68,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Temperature (°F)"
             keyboardType="numeric"
-            value={currentData.temperature?.toString()}
+            value={(currentData.temperature?.toString() || '')}
             onChangeText={(value) => handleChange('temperature', value)}
             style={styles.input}
           />
@@ -80,7 +79,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Pressure (PSI)"
             keyboardType="numeric"
-            value={currentData.pressure?.toString()}
+            value={currentData.pressure?.toString() || ''}
             onChangeText={(value) => handleChange('pressure', value)}
             style={styles.input}
           />
@@ -91,7 +90,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Humidity (%)"
             keyboardType="numeric"
-            value={currentData.humidity?.toString()}
+            value={currentData.humidity?.toString() || ''}
             onChangeText={(value) => handleChange('humidity', value)}
             style={styles.input}
           />
@@ -102,7 +101,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Airflow (CFM)"
             keyboardType="numeric"
-            value={currentData.airflow?.toString()}
+            value={currentData.airflow?.toString() || ''}
             onChangeText={(value) => handleChange('airflow', value)}
             style={styles.input}
           />
@@ -113,7 +112,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Power (kW)"
             keyboardType="numeric"
-            value={currentData.powerConsumption?.toString()}
+            value={currentData.powerConsumption?.toString() || ''}
             onChangeText={(value) => handleChange('powerConsumption', value)}
             style={styles.input}
           />
@@ -124,7 +123,7 @@ export function SensorDataInput({ onDataChange, currentData }: Props) {
           <ThemedInput
             label="Noise (dB)"
             keyboardType="numeric"
-            value={currentData.noiseLevel?.toString()}
+            value={currentData.noiseLevel?.toString() || ''}
             onChangeText={(value) => handleChange('noiseLevel', value)}
             style={styles.input}
           />

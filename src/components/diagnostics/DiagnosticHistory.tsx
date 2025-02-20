@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { ThemedText } from '../ThemedText';
-import type { DiagnosticState } from '../../types';
+import type { DiagnosticHistoryItem } from '../../types';
 
 interface Props {
-  history: Array<DiagnosticState & { timestamp: number }>;
-  onSelectDiagnostic: (diagnostic: DiagnosticState) => void;
+  history: DiagnosticHistoryItem[];
+  onSelectDiagnostic: (diagnostic: DiagnosticHistoryItem) => void;
 }
 
 export function DiagnosticHistory({ history, onSelectDiagnostic }: Props) {

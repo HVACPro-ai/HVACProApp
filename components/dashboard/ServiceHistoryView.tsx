@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { ServiceHistory } from '@/src/api/tasksApi';
 import { Ionicons } from '@expo/vector-icons';
+import { ImageGallery } from './ImageGallery';
 
 interface Props {
   history: ServiceHistory[];
@@ -40,7 +41,7 @@ export function ServiceHistoryView({ history }: Props) {
   return (
     <View style={styles.container}>
       <ThemedText style={styles.title}>Service History</ThemedText>
-      <ScrollView style={styles.historyList}>
+      <View style={styles.historyList}>
         {history.map((record) => (
           <View key={record.id} style={styles.historyItem}>
             <View style={styles.header}>
@@ -87,9 +88,13 @@ export function ServiceHistoryView({ history }: Props) {
                 ))}
               </View>
             )}
+            
+            {record.images && record.images.length > 0 && (
+              <ImageGallery images={record.images} />
+            )}
           </View>
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -102,10 +107,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 15,
-    paddingHorizontal: 15,
   },
   historyList: {
-    maxHeight: 400,
+    // Remove maxHeight constraint
   },
   historyItem: {
     backgroundColor: '#f8f8f8',

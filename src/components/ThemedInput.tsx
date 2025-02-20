@@ -1,68 +1,66 @@
 import React from 'react';
-import { TextInput, TextInputProps, View, StyleSheet, useColorScheme } from 'react-native';
+import { TextInput, View, StyleSheet, KeyboardTypeOptions } from 'react-native';
 import { ThemedText } from './ThemedText';
 
-export interface ThemedInputProps extends Omit<TextInputProps, 'style'> {
+interface Props {
   label?: string;
-  error?: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
   style?: any;
+  multiline?: boolean;
+  numberOfLines?: number;
+  keyboardType?: KeyboardTypeOptions;
 }
 
-export const ThemedInput: React.FC<ThemedInputProps> = ({ 
+export function ThemedInput({
   label,
-  error,
+  value = '',
+  onChangeText,
+  placeholder,
   style,
-  ...props 
-}) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
+  multiline = false,
+  numberOfLines = 1,
+  keyboardType = 'default',
+}: Props) {
   return (
-    <View style={[styles.container, style]}>
-      {label && (
-        <ThemedText style={styles.label}>{label}</ThemedText>
-      )}
+    <View style={styles.container}>
+      {label && <ThemedText style={styles.label}>{label}</ThemedText>}
       <TextInput
-        {...props}
-        style={[
-          styles.input,
-          {
-            color: isDark ? '#fff' : '#000',
-            backgroundColor: isDark ? '#333' : '#fff',
-            borderColor: isDark ? '#666' : '#ccc',
-          },
-          error && styles.inputError
-        ]}
-        placeholderTextColor={isDark ? '#999' : '#666'}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        style={[styles.input, multiline && styles.multilineInput, style]}
+        multiline={multiline}
+        numberOfLines={numberOfLines}
+        keyboardType={keyboardType}
       />
-      {error && (
-        <ThemedText style={styles.errorText}>{error}</ThemedText>
-      )}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 10,
+    marginBottom: 16,
+    width: '100%',
   },
   label: {
-    fontSize: 14,
-    marginBottom: 4,
-    color: '#666',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333',
   },
   input: {
+    backgroundColor: '#fff',
     borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 8,
-    padding: 10,
+    padding: 12,
     fontSize: 16,
+    minHeight: 48,
   },
-  inputError: {
-    borderColor: '#FF3B30',
-  },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 4,
+  multilineInput: {
+    height: 'auto',
+    textAlignVertical: 'top',
   },
 }); 

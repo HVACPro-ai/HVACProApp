@@ -8,4 +8,7 @@ export interface Task {
   status: 'pending' | 'in_progress' | 'completed';
   customerId: string;
   equipmentId: string;
+  assignedTo?: string;
+  createdAt: string;
+  updatedAt: string;
 } 

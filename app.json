@@ -29,7 +29,13 @@
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow HVAC Pro to use your location to show local weather conditions."
+        }
+      ]
     ],
     "scheme": "hvacpro",
     "newArchEnabled": true

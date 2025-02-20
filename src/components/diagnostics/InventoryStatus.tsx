@@ -1,73 +1,74 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '../ThemedText';
-import { ThemedButton } from '../ThemedButton';
 import { Ionicons } from '@expo/vector-icons';
 import type { InventoryStatus as InventoryStatusType } from '../../types';
 
 interface Props {
   status: InventoryStatusType;
-  onOrderPart?: () => void;
-  onReservePart?: () => void;
 }
 
-export function InventoryStatus({ status, onOrderPart, onReservePart }: Props) {
-  const handleOrderPress = () => {
-    if (onOrderPart) {
-      onOrderPart();
-    }
-  };
-
-  const handleReservePress = () => {
-    if (onReservePart) {
-      onReservePart();
+export function InventoryStatus({ status }: Props) {
+  const getStatusColor = (availability: string) => {
+    switch (availability) {
+      case 'in_stock':
+        return '#4CAF50';
+      case 'back_ordered':
+        return '#FFA500';
+      case 'discontinued':
+        return '#FF0000';
+      default:
+        return '#666';
     }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>Part Information</ThemedText>
-        <Ionicons 
-          name={status.available ? "checkmark-circle" : "close-circle"} 
-          size={24} 
-          color={status.available ? "#4CAF50" : "#FF3B30"} 
+        <ThemedText style={styles.title}>{status.partName}</ThemedText>
+        <ThemedText style={styles.partNumber}>Part #: {status.partNumber}</ThemedText>
+      </View>
+
+      <View style={styles.statusRow}>
+        <Ionicons
+          name={status.availability === 'in_stock' ? 'checkmark-circle' : 'warning'}
+          size={24}
+          color={getStatusColor(status.availability)}
         />
+        <ThemedText style={[styles.status, { color: getStatusColor(status.availability) }]}>
+          {status.availability === 'in_stock' ? 'In Stock' : status.availability === 'back_ordered' ? 'Back Ordered' : 'Discontinued'}
+        </ThemedText>
       </View>
 
-      <View style={styles.infoContainer}>
-        <ThemedText style={styles.label}>Part Number:</ThemedText>
-        <ThemedText style={styles.value}>{status.partNumber}</ThemedText>
+      {status.quantity !== undefined && (
+        <View style={styles.detailRow}>
+          <ThemedText style={styles.label}>Quantity:</ThemedText>
+          <ThemedText style={styles.value}>{status.quantity}</ThemedText>
+        </View>
+      )}
 
-        <ThemedText style={styles.label}>Part Name:</ThemedText>
-        <ThemedText style={styles.value}>{status.partName}</ThemedText>
+      {status.location && (
+        <View style={styles.detailRow}>
+          <ThemedText style={styles.label}>Location:</ThemedText>
+          <ThemedText style={styles.value}>{status.location}</ThemedText>
+        </View>
+      )}
 
-        {status.available && (
-          <>
-            <ThemedText style={styles.label}>Quantity Available:</ThemedText>
-            <ThemedText style={styles.value}>{status.quantity}</ThemedText>
+      {status.estimatedDelivery && (
+        <View style={styles.detailRow}>
+          <ThemedText style={styles.label}>Estimated Delivery:</ThemedText>
+          <ThemedText style={styles.value}>{status.estimatedDelivery}</ThemedText>
+        </View>
+      )}
 
-            <ThemedText style={styles.label}>Location:</ThemedText>
-            <ThemedText style={styles.value}>{status.location}</ThemedText>
-          </>
-        )}
-      </View>
-
-      <View style={styles.buttonContainer}>
-        {status.available ? (
-          <ThemedButton
-            title="Reserve Part"
-            onPress={handleReservePress}
-            style={styles.button}
-          />
-        ) : (
-          <ThemedButton
-            title="Order Part"
-            onPress={handleOrderPress}
-            style={[styles.button, styles.orderButton]}
-          />
-        )}
-      </View>
+      {status.alternativeParts && status.alternativeParts.length > 0 && (
+        <View style={styles.alternativesContainer}>
+          <ThemedText style={styles.label}>Alternative Parts:</ThemedText>
+          {status.alternativeParts.map((part, index) => (
+            <ThemedText key={index} style={styles.alternativePart}>{part}</ThemedText>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -89,26 +90,39 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  infoContainer: {
-    marginBottom: 16,
+  partNumber: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  status: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   label: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 4,
+    fontWeight: '500',
   },
   value: {
     fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 12,
+    color: '#666',
   },
-  buttonContainer: {
+  alternativesContainer: {
     marginTop: 8,
   },
-  button: {
-    marginVertical: 4,
-  },
-  orderButton: {
-    backgroundColor: '#FF9500',
+  alternativePart: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 4,
   },
 }); 

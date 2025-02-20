@@ -1,4 +1,6 @@
-export const getDashboardStats = async () => {
+import { DashboardStat } from '@/src/hooks/useDashboardData';
+
+export const getDashboardStats = async (): Promise<DashboardStat[]> => {
   // Simulated API call
   await new Promise(resolve => setTimeout(resolve, 1000));
   
@@ -16,16 +18,16 @@ export const getDashboardStats = async () => {
       trend: 'down' as const,
     },
     {
-      label: 'Revenue',
-      value: 2450,
-      change: 15,
+      label: 'Parts Orders',
+      value: 5,
+      change: 1,
       trend: 'up' as const,
     },
     {
-      label: 'Pending',
-      value: 5,
-      change: 0,
-      trend: 'neutral' as const,
+      label: 'Scheduled',
+      value: 15,
+      change: 3,
+      trend: 'up' as const,
     },
   ];
 }; 

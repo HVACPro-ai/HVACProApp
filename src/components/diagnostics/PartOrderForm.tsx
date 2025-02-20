@@ -7,7 +7,7 @@ import { ThemedButton } from '../ThemedButton';
 interface Props {
   partNumber: string;
   partName: string;
-  onSubmit: (orderDetails: OrderDetails) => Promise<void>;
+  onSubmit: (orderDetails: OrderDetails) => void;
   onCancel: () => void;
 }
 
@@ -19,8 +19,8 @@ interface OrderDetails {
 
 export function PartOrderForm({ partNumber, partName, onSubmit, onCancel }: Props) {
   const [quantity, setQuantity] = useState('1');
-  const [priority, setPriority] = useState<'standard' | 'express' | 'urgent'>('standard');
   const [notes, setNotes] = useState('');
+  const [priority, setPriority] = useState<'standard' | 'express' | 'urgent'>('standard');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -46,17 +46,22 @@ export function PartOrderForm({ partNumber, partName, onSubmit, onCancel }: Prop
   return (
     <View style={styles.container}>
       <ThemedText style={styles.title}>Order Part</ThemedText>
-      
-      <View style={styles.partInfo}>
-        <ThemedText style={styles.label}>Part Number: {partNumber}</ThemedText>
-        <ThemedText style={styles.label}>Part Name: {partName}</ThemedText>
-      </View>
+      <ThemedText style={styles.partInfo}>{partName} ({partNumber})</ThemedText>
 
       <ThemedInput
         label="Quantity"
         value={quantity}
         onChangeText={setQuantity}
         keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <ThemedInput
+        label="Notes"
+        value={notes}
+        onChangeText={setNotes}
+        multiline
+        numberOfLines={3}
         style={styles.input}
       />
 
@@ -76,15 +81,6 @@ export function PartOrderForm({ partNumber, partName, onSubmit, onCancel }: Prop
           ))}
         </View>
       </View>
-
-      <ThemedInput
-        label="Notes"
-        value={notes}
-        onChangeText={setNotes}
-        multiline
-        numberOfLines={3}
-        style={styles.input}
-      />
 
       <View style={styles.buttonContainer}>
         <ThemedButton

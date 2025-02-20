@@ -1,53 +1,22 @@
 import React from 'react';
-import { TextInput, TextInputProps, StyleSheet, View } from 'react-native';
-import { useColorScheme } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { TextInput, TextInputProps } from 'react-native';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
-interface ThemedInputProps extends TextInputProps {
-  error?: string;
-}
+export type ThemedInputProps = TextInputProps & {
+  lightColor?: string;
+  darkColor?: string;
+};
 
-export function ThemedInput({ error, style, ...props }: ThemedInputProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+export function ThemedInput(props: ThemedInputProps) {
+  const { style, lightColor, darkColor, ...otherProps } = props;
+  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
 
   return (
-    <View style={style}>
-      <TextInput
-        {...props}
-        style={[
-          styles.input,
-          { 
-            color: isDark ? '#fff' : '#000',
-            backgroundColor: isDark ? '#333' : '#fff',
-            borderColor: isDark ? '#666' : '#ccc',
-          },
-          error && styles.inputError
-        ]}
-        placeholderTextColor={isDark ? '#999' : '#666'}
-      />
-      {error && (
-        <ThemedText style={styles.errorText}>{error}</ThemedText>
-      )}
-    </View>
+    <TextInput 
+      style={[{ color, backgroundColor }, style]} 
+      placeholderTextColor={color}
+      {...otherProps} 
+    />
   );
-}
-
-const styles = StyleSheet.create({
-  input: {
-    width: '100%',
-    padding: 15,
-    borderWidth: 1,
-    marginBottom: 15,
-    borderRadius: 5,
-    fontSize: 16,
-  },
-  inputError: {
-    borderColor: '#FF3B30',
-  },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 4,
-  },
-}); 
+} 

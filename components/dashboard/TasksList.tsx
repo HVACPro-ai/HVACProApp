@@ -1,19 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { Task } from '@/src/hooks/useDashboardData';
 import { Ionicons } from '@expo/vector-icons';
+import { TaskDetailsModal } from './TaskDetailsModal';
+import { updateTaskStatus } from '@/src/api/tasksApi';
 
 interface Props {
   tasks: Task[];
+  onTaskUpdate?: (updatedTask: Task) => void;
 }
 
-export function TasksList({ tasks }: Props) {
+export function TasksList({ tasks, onTaskUpdate }: Props) {
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const handleTaskPress = (task: Task) => {
+    setSelectedTask(task);
+    setModalVisible(true);
+  };
+
+  const handleUpdateStatus = async (taskId: string, newStatus: Task['status']) => {
+    try {
+      const updatedTask = await updateTaskStatus(taskId, newStatus);
+      onTaskUpdate?.(updatedTask);
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ThemedText style={styles.title}>Today's Tasks</ThemedText>
       {tasks.map(task => (
-        <TouchableOpacity key={task.id} style={styles.taskCard}>
+        <TouchableOpacity 
+          key={task.id} 
+          style={styles.taskCard}
+          onPress={() => handleTaskPress(task)}
+        >
           <View style={styles.taskHeader}>
             <View style={[styles.priorityDot, { 
               backgroundColor: 
@@ -46,6 +70,16 @@ export function TasksList({ tasks }: Props) {
           </View>
         </TouchableOpacity>
       ))}
+
+      <TaskDetailsModal
+        task={selectedTask}
+        visible={modalVisible}
+        onClose={() => {
+          setModalVisible(false);
+          setSelectedTask(null);
+        }}
+        onUpdateStatus={handleUpdateStatus}
+      />
     </View>
   );
 }
