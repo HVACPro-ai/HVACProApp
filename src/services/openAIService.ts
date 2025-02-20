@@ -12,8 +12,26 @@ export class OpenAIService {
   private apiKey: string;
   private baseUrl = 'https://api.openai.com/v1';
 
+  private equipmentPrompts = {
+    ac: {
+      specific: "You are analyzing an air conditioning system. Focus on cooling performance, refrigerant levels, and electrical components."
+    },
+    furnace: {
+      specific: "You are analyzing a furnace system. Focus on heating performance, gas/oil systems, and safety components."
+    },
+    heatPump: {
+      specific: "You are analyzing a heat pump system. Focus on both heating and cooling modes, defrost cycles, and reversing valve operation."
+    },
+    boiler: {
+      specific: "You are analyzing a boiler system. Focus on water temperature, pressure levels, and combustion efficiency."
+    }
+  };
+
   private constructor() {
     this.apiKey = process.env.OPENAI_API_KEY || '';
+    if (!this.apiKey) {
+      console.warn('OpenAI API key not found in environment variables');
+    }
   }
 
   public static getInstance(): OpenAIService {

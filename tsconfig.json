@@ -20,8 +20,12 @@
       "@/constants/*": ["constants/*"],
       "@/src/*": ["src/*"],
       "@/types/*": ["src/types/*"]
-    }
+    },
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   },
-  "include": ["./**/*.ts", "./**/*.tsx"],
+  "include": [
+    "src/**/*",
+    "src/types/env.d.ts"
+  ],
   "exclude": ["node_modules"]
 }
