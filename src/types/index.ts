@@ -1,6 +1,35 @@
-export * from './diagnosticState';
-export * from './aiTypes';
-export * from './equipment';
+// All types in one file for now
+export interface EquipmentTypeInfo {
+  type: 'furnace' | 'ac' | 'minisplit';
+  brand: string;
+  series?: string;
+}
+
+export interface DiagnosticState {
+  equipmentType?: EquipmentTypeInfo;
+  brand: string;
+  modelNumber: string;
+  serialNumber: string;
+  symptoms: string[];
+  answers: Record<string, string>;
+  sensorData?: {
+    temperature?: number;
+    pressure?: number;
+    humidity?: number;
+    airflow?: number;
+    powerConsumption?: number;
+    noiseLevel?: number;
+  };
+  confirmedIssue?: string;
+}
+
+export interface AIQuestion {
+  id: string;
+  text: string;
+  type: 'yes_no' | 'multiple_choice' | 'text';
+  options: string[];
+  nextQuestionMap: Record<string, string>;
+}
 
 export interface AIAnalysisResult {
   issue: string;
