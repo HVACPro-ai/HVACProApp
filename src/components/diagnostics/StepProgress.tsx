@@ -1,80 +1,63 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { Ionicons } from '@expo/vector-icons';
+import { ThemedText } from '../ThemedComponents';
 
 interface Props {
-  currentStep: number;
-  steps: string[];
+  step: number;
+  onNext: () => void;
+  onBack: () => void;
+  isValid: boolean;
+  loading: boolean;
 }
 
-export function StepProgress({ currentStep, steps }: Props) {
+const TOTAL_STEPS = 4;
+
+export const StepProgress: React.FC<Props> = ({ step }) => {
   return (
     <View style={styles.container}>
-      {steps.map((step, index) => (
-        <View key={index} style={styles.stepContainer}>
-          <View style={[
-            styles.circle,
-            index + 1 === currentStep && styles.activeCircle,
-            index + 1 < currentStep && styles.completedCircle
-          ]}>
-            {index + 1 < currentStep ? (
-              <Ionicons name="checkmark" size={16} color="#fff" />
-            ) : (
-              <ThemedText style={[
-                styles.stepNumber,
-                index + 1 === currentStep && styles.activeText
-              ]}>
-                {index + 1}
-              </ThemedText>
-            )}
-          </View>
-          <ThemedText style={[
-            styles.stepText,
-            index + 1 === currentStep && styles.activeText
-          ]}>
-            {step}
-          </ThemedText>
-        </View>
-      ))}
+      <View style={styles.progressBar}>
+        {Array.from({ length: TOTAL_STEPS }).map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.step,
+              index < step && styles.completed,
+              index === step - 1 && styles.current,
+            ]}
+          />
+        ))}
+      </View>
+      <ThemedText style={styles.stepText}>
+        Step {step} of {TOTAL_STEPS}
+      </ThemedText>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
+    marginVertical: 16,
+  },
+  progressBar: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 20,
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  stepContainer: {
-    alignItems: 'center',
+  step: {
+    flex: 1,
+    height: 4,
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: 2,
+    borderRadius: 2,
   },
-  circle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#ddd',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  activeCircle: {
+  completed: {
     backgroundColor: '#007AFF',
   },
-  completedCircle: {
-    backgroundColor: '#34C759',
-  },
-  stepNumber: {
-    color: '#666',
+  current: {
+    backgroundColor: '#007AFF',
   },
   stepText: {
-    fontSize: 12,
+    textAlign: 'center',
     color: '#666',
-  },
-  activeText: {
-    color: '#007AFF',
-    fontWeight: 'bold',
   },
 }); 

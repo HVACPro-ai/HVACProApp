@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { ThemedButton } from '../ThemedButton';
+import { ThemedText, ThemedButton } from '../ThemedComponents';
 import type { AIQuestion } from '../../types';
 
 interface Props {
@@ -11,12 +10,9 @@ interface Props {
   isLoading?: boolean;
 }
 
-export function AIQuestionPrompt({ 
-  question, 
-  onAnswer, 
-  previousAnswers,
-  isLoading 
-}: Props) {
+export const AIQuestionPrompt: React.FC<Props> = ({ question, onAnswer, previousAnswers, isLoading }) => {
+  const [selectedAnswer, setSelectedAnswer] = useState<string>('');
+
   return (
     <View style={styles.container}>
       <ThemedText style={styles.question}>{question.text}</ThemedText>
@@ -31,14 +27,26 @@ export function AIQuestionPrompt({
         <View style={styles.buttonRow}>
           <ThemedButton
             title="Yes"
-            onPress={() => onAnswer('yes')}
-            style={styles.optionButton}
+            onPress={() => {
+              setSelectedAnswer('yes');
+              onAnswer('yes');
+            }}
+            style={[
+              styles.optionButton,
+              selectedAnswer === 'yes' && styles.selectedOption,
+            ]}
             disabled={isLoading}
           />
           <ThemedButton
             title="No"
-            onPress={() => onAnswer('no')}
-            style={styles.optionButton}
+            onPress={() => {
+              setSelectedAnswer('no');
+              onAnswer('no');
+            }}
+            style={[
+              styles.optionButton,
+              selectedAnswer === 'no' && styles.selectedOption,
+            ]}
             disabled={isLoading}
           />
         </View>
@@ -48,8 +56,14 @@ export function AIQuestionPrompt({
             <ThemedButton
               key={index}
               title={option}
-              onPress={() => onAnswer(option)}
-              style={styles.optionButton}
+              onPress={() => {
+                setSelectedAnswer(option);
+                onAnswer(option);
+              }}
+              style={[
+                styles.optionButton,
+                selectedAnswer === option && styles.selectedOption,
+              ]}
               disabled={isLoading}
             />
           ))}
@@ -57,7 +71,7 @@ export function AIQuestionPrompt({
       )}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -65,8 +79,8 @@ const styles = StyleSheet.create({
   },
   question: {
     fontSize: 18,
+    fontWeight: 'bold',
     marginBottom: 16,
-    textAlign: 'center',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -77,7 +91,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   optionButton: {
-    marginVertical: 8,
+    marginVertical: 4,
+  },
+  selectedOption: {
+    backgroundColor: '#007AFF',
   },
   previousAnswer: {
     fontStyle: 'italic',

@@ -1,17 +1,26 @@
-import type { OrderDetails } from '../types';
+import type { OrderDetails, EquipmentTypeInfo } from '../types';
 
 export class PartOrderService {
-  static async submitOrder(
-    partNumber: string,
-    orderDetails: OrderDetails
-  ): Promise<{ orderId: string }> {
-    // In a real implementation, this would make an API call
-    // For now, we'll simulate an API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    return {
-      orderId: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    };
+  static async submitOrder(orderDetails: OrderDetails, equipment: EquipmentTypeInfo): Promise<void> {
+    try {
+      const response = await fetch('/api/orders/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...orderDetails,
+          equipment,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit order');
+      }
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      throw error;
+    }
   }
 
   static async checkOrderStatus(orderId: string): Promise<{

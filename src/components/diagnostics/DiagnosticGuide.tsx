@@ -1,129 +1,51 @@
 import React from 'react';
-import { View, StyleSheet, Modal } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedButton } from '@/components/ThemedButton';
+import { View, StyleSheet } from 'react-native';
+import { ThemedText, ThemedButton } from '../ThemedComponents';
 
 interface Props {
-  visible: boolean;
-  onClose: () => void;
   currentStep: number;
+  onClose: () => void;
 }
 
-export function DiagnosticGuide({ visible, onClose, currentStep }: Props) {
-  const getStepGuide = () => {
-    switch (currentStep) {
-      case 1:
-        return {
-          title: 'Equipment Information',
-          steps: [
-            'Locate the model number on your HVAC unit',
-            'Find the serial number (usually near the model number)',
-            'Enter both numbers exactly as shown on the unit'
-          ]
-        };
-      case 2:
-        return {
-          title: 'Describing Symptoms',
-          steps: [
-            'List any unusual sounds, smells, or behavior',
-            'Note when the problems started',
-            'Describe any patterns you\'ve noticed',
-            'Include temperature or comfort issues'
-          ]
-        };
-      case 3:
-        return {
-          title: 'Collecting Data',
-          steps: [
-            'Take clear photos of any visible issues',
-            'Capture the display panel if showing errors',
-            'Enter current sensor readings if available',
-            'Include any unusual meter readings'
-          ]
-        };
-      case 4:
-        return {
-          title: 'Understanding Results',
-          steps: [
-            'Review the AI\'s confidence level',
-            'Check immediate action items',
-            'Note recommended maintenance',
-            'Consider efficiency suggestions'
-          ]
-        };
-      default:
-        return { title: '', steps: [] };
-    }
-  };
+const STEP_GUIDES = {
+  1: 'Select the equipment type and enter basic information.',
+  2: 'Take clear photos of the equipment and any visible issues.',
+  3: 'Enter sensor readings if available.',
+  4: 'Review AI analysis and recommendations.',
+};
 
-  const guide = getStepGuide();
-
+export const DiagnosticGuide: React.FC<Props> = ({ currentStep, onClose }) => {
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-    >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <ThemedText style={styles.title}>{guide.title}</ThemedText>
-          {guide.steps.map((step, index) => (
-            <View key={index} style={styles.stepItem}>
-              <ThemedText style={styles.stepNumber}>{index + 1}</ThemedText>
-              <ThemedText style={styles.stepText}>{step}</ThemedText>
-            </View>
-          ))}
-          <ThemedButton
-            title="Got it"
-            onPress={onClose}
-            style={styles.button}
-          />
-        </View>
-      </View>
-    </Modal>
+    <View style={styles.container}>
+      <ThemedText style={styles.title}>Step {currentStep} Guide</ThemedText>
+      <ThemedText style={styles.content}>
+        {STEP_GUIDES[currentStep as keyof typeof STEP_GUIDES]}
+      </ThemedText>
+      <ThemedButton
+        title="Got it"
+        onPress={onClose}
+        style={styles.button}
+      />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    width: '90%',
-    maxWidth: 400,
+  container: {
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 8,
   },
   title: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+    marginBottom: 16,
   },
-  stepItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  stepNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#007AFF',
-    color: 'white',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginRight: 10,
-  },
-  stepText: {
-    flex: 1,
-    fontSize: 16,
+  content: {
+    marginBottom: 16,
+    lineHeight: 20,
   },
   button: {
-    marginTop: 20,
+    alignSelf: 'flex-end',
   },
 }); 

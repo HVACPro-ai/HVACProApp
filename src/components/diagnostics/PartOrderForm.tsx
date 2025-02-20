@@ -1,43 +1,35 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { ThemedInput } from '../ThemedInput';
-import { ThemedButton } from '../ThemedButton';
+import { View, StyleSheet } from 'react-native';
+import { ThemedText, ThemedInput, ThemedButton } from '../ThemedComponents';
+import type { EquipmentTypeInfo, OrderDetails, OrderPriority } from '../../types';
 
 interface Props {
-  partNumber: string;
-  partName: string;
-  onSubmit: (orderDetails: OrderDetails) => void;
-  onCancel: () => void;
+  equipment: EquipmentTypeInfo;
+  onSubmit: (orderDetails: OrderDetails) => Promise<void>;
+  onClose: () => void;
 }
 
-interface OrderDetails {
-  quantity: number;
-  priority: 'standard' | 'express' | 'urgent';
-  notes: string;
-}
-
-export function PartOrderForm({ partNumber, partName, onSubmit, onCancel }: Props) {
+export const PartOrderForm: React.FC<Props> = ({ equipment, onSubmit, onClose }) => {
+  const [partNumber, setPartNumber] = useState('');
   const [quantity, setQuantity] = useState('1');
+  const [priority, setPriority] = useState<OrderPriority>('standard');
   const [notes, setNotes] = useState('');
-  const [priority, setPriority] = useState<'standard' | 'express' | 'urgent'>('standard');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (parseInt(quantity) < 1) {
-      Alert.alert('Invalid Quantity', 'Please enter a valid quantity');
-      return;
-    }
+    if (!partNumber || !quantity) return;
 
+    setLoading(true);
     try {
-      setLoading(true);
       await onSubmit({
-        quantity: parseInt(quantity),
+        partNumber,
+        quantity: parseInt(quantity, 10),
         priority,
         notes,
       });
+      onClose();
     } catch (error) {
-      Alert.alert('Error', 'Failed to submit order. Please try again.');
+      console.error('Error submitting order:', error);
     } finally {
       setLoading(false);
     }
@@ -45,59 +37,51 @@ export function PartOrderForm({ partNumber, partName, onSubmit, onCancel }: Prop
 
   return (
     <View style={styles.container}>
-      <ThemedText style={styles.title}>Order Part</ThemedText>
-      <ThemedText style={styles.partInfo}>{partName} ({partNumber})</ThemedText>
+      <ThemedText style={styles.title}>Order Parts</ThemedText>
+      <ThemedText style={styles.subtitle}>
+        Equipment: {equipment.manufacturer} {equipment.model}
+      </ThemedText>
 
       <ThemedInput
-        label="Quantity"
+        value={partNumber}
+        onChangeText={setPartNumber}
+        placeholder="Part Number"
+        style={styles.input}
+      />
+
+      <ThemedInput
         value={quantity}
         onChangeText={setQuantity}
+        placeholder="Quantity"
         keyboardType="numeric"
         style={styles.input}
       />
 
       <ThemedInput
-        label="Notes"
         value={notes}
         onChangeText={setNotes}
+        placeholder="Notes"
         multiline
-        numberOfLines={3}
         style={styles.input}
       />
-
-      <View style={styles.priorityContainer}>
-        <ThemedText style={styles.label}>Priority:</ThemedText>
-        <View style={styles.priorityButtons}>
-          {(['standard', 'express', 'urgent'] as const).map((p) => (
-            <ThemedButton
-              key={p}
-              title={p.charAt(0).toUpperCase() + p.slice(1)}
-              onPress={() => setPriority(p)}
-              style={[
-                styles.priorityButton,
-                priority === p && styles.selectedPriority,
-              ]}
-            />
-          ))}
-        </View>
-      </View>
 
       <View style={styles.buttonContainer}>
         <ThemedButton
           title="Cancel"
-          onPress={onCancel}
-          style={[styles.button, styles.cancelButton]}
+          onPress={onClose}
+          style={styles.button}
+          disabled={loading}
         />
         <ThemedButton
-          title="Submit Order"
+          title={loading ? 'Submitting...' : 'Submit'}
           onPress={handleSubmit}
-          loading={loading}
-          style={styles.button}
+          style={[styles.button, styles.primaryButton]}
+          disabled={!partNumber || !quantity || loading}
         />
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -108,34 +92,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  partInfo: {
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-  },
-  label: {
-    fontSize: 16,
     marginBottom: 8,
   },
+  subtitle: {
+    marginBottom: 16,
+  },
   input: {
-    marginBottom: 16,
-  },
-  priorityContainer: {
-    marginBottom: 16,
-  },
-  priorityButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  priorityButton: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  selectedPriority: {
-    backgroundColor: '#4CAF50',
+    marginBottom: 12,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -146,7 +109,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 8,
   },
-  cancelButton: {
-    backgroundColor: '#666',
+  primaryButton: {
+    backgroundColor: '#007AFF',
   },
 }); 

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { DiagnosticState } from '../types';
+import { DiagnosticHistoryItem } from '../types';
 
 const STORAGE_KEYS = {
   DIAGNOSTIC_DATA: 'diagnostic_data',
@@ -89,6 +90,24 @@ export class StorageService {
     } catch (error) {
       console.error('Error getting diagnostic history:', error);
       return [];
+    }
+  }
+
+  static async getLastDiagnostic(): Promise<DiagnosticHistoryItem | null> {
+    try {
+      const data = await AsyncStorage.getItem('lastDiagnostic');
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error('Error getting last diagnostic:', error);
+      return null;
+    }
+  }
+
+  static async saveDiagnostic(diagnostic: DiagnosticHistoryItem): Promise<void> {
+    try {
+      await AsyncStorage.setItem('lastDiagnostic', JSON.stringify(diagnostic));
+    } catch (error) {
+      console.error('Error saving diagnostic:', error);
     }
   }
 } 

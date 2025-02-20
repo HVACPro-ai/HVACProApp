@@ -1,134 +1,85 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { ThemedInput } from '../ThemedInput';
-import { Ionicons } from '@expo/vector-icons';
-import { SensorData } from '../../types';
+import { ThemedText, ThemedInput } from '../ThemedComponents';
+import type { SensorData } from '../../types';
 
-interface ValidationErrors {
-  [key: string]: string;
-}
-
-export interface Props {
+interface Props {
   data: Partial<SensorData>;
   onDataChange: (data: Partial<SensorData>) => void;
+  error?: string;
 }
 
-export function SensorDataInput({ data, onDataChange }: Props) {
-  const [errors, setErrors] = useState<ValidationErrors>({});
-
-  const validateField = (key: string, value: number): string => {
-    switch (key) {
-      case 'temperature':
-        return (value < -20 || value > 120) ? 'Temperature must be between -20°F and 120°F' : '';
-      case 'pressure':
-        return (value < 0 || value > 500) ? 'Pressure must be between 0 and 500 PSI' : '';
-      case 'humidity':
-        return (value < 0 || value > 100) ? 'Humidity must be between 0% and 100%' : '';
-      case 'airflow':
-        return (value < 0 || value > 2000) ? 'Airflow must be between 0 and 2000 CFM' : '';
-      case 'powerConsumption':
-        return (value < 0 || value > 50) ? 'Power must be between 0 and 50 kW' : '';
-      default:
-        return '';
-    }
+export const SensorDataInput: React.FC<Props> = ({ data, onDataChange, error }) => {
+  const handleChange = (key: keyof SensorData, value: string) => {
+    const numValue = value ? parseFloat(value) : undefined;
+    onDataChange({
+      ...data,
+      [key]: numValue,
+    });
   };
 
-  const handleChange = (key: keyof SensorData, value: string) => {
-    const numValue = parseFloat(value) || 0;
-    const error = validateField(key, numValue);
-    
-    setErrors(prev => ({
-      ...prev,
-      [key]: error
-    }));
-
-    if (!error) {
-      onDataChange({
-        [key]: numValue,
-      });
-    }
+  const getDisplayValue = (value: number | undefined) => {
+    return value !== undefined ? value.toString() : '';
   };
 
   return (
     <View style={styles.container}>
       <ThemedText style={styles.title}>Sensor Readings</ThemedText>
       
-      <View style={styles.sensorGrid}>
-        <View style={styles.sensorItem}>
-          <Ionicons name="thermometer-outline" size={24} color="#007AFF" />
-          <ThemedInput
-            label="Temperature (°F)"
-            keyboardType="numeric"
-            value={(data.temperature?.toString() || '')}
-            onChangeText={(value) => handleChange('temperature', value)}
-            style={styles.input}
-          />
-        </View>
+      {error && <ThemedText style={styles.error}>{error}</ThemedText>}
 
-        <View style={styles.sensorItem}>
-          <Ionicons name="speedometer-outline" size={24} color="#007AFF" />
-          <ThemedInput
-            label="Pressure (PSI)"
-            keyboardType="numeric"
-            value={data.pressure?.toString() || ''}
-            onChangeText={(value) => handleChange('pressure', value)}
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.sensorItem}>
-          <Ionicons name="water-outline" size={24} color="#007AFF" />
-          <ThemedInput
-            label="Humidity (%)"
-            keyboardType="numeric"
-            value={data.humidity?.toString() || ''}
-            onChangeText={(value) => handleChange('humidity', value)}
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.sensorItem}>
-          <Ionicons name="leaf-outline" size={24} color="#007AFF" />
-          <ThemedInput
-            label="Airflow (CFM)"
-            keyboardType="numeric"
-            value={data.airflow?.toString() || ''}
-            onChangeText={(value) => handleChange('airflow', value)}
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.sensorItem}>
-          <Ionicons name="flash-outline" size={24} color="#007AFF" />
-          <ThemedInput
-            label="Power (kW)"
-            keyboardType="numeric"
-            value={data.powerConsumption?.toString() || ''}
-            onChangeText={(value) => handleChange('powerConsumption', value)}
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.sensorItem}>
-          <Ionicons name="volume-medium-outline" size={24} color="#007AFF" />
-          <ThemedInput
-            label="Noise (dB)"
-            keyboardType="numeric"
-            value={data.noiseLevel?.toString() || ''}
-            onChangeText={(value) => handleChange('noiseLevel', value)}
-            style={styles.input}
-          />
-        </View>
+      <View style={styles.inputRow}>
+        <ThemedText style={styles.label}>Temperature (°F)</ThemedText>
+        <ThemedInput
+          value={getDisplayValue(data.temperature)}
+          onChangeText={(value) => handleChange('temperature', value)}
+          keyboardType="numeric"
+          style={styles.input}
+        />
       </View>
-      {Object.entries(errors).map(([key, error]) => (
-        error ? (
-          <ThemedText key={key} style={styles.errorText}>{error}</ThemedText>
-        ) : null
-      ))}
+
+      <View style={styles.inputRow}>
+        <ThemedText style={styles.label}>Pressure (PSI)</ThemedText>
+        <ThemedInput
+          value={getDisplayValue(data.pressure)}
+          onChangeText={(value) => handleChange('pressure', value)}
+          keyboardType="numeric"
+          style={styles.input}
+        />
+      </View>
+
+      <View style={styles.inputRow}>
+        <ThemedText style={styles.label}>Humidity (%)</ThemedText>
+        <ThemedInput
+          value={getDisplayValue(data.humidity)}
+          onChangeText={(value) => handleChange('humidity', value)}
+          keyboardType="numeric"
+          style={styles.input}
+        />
+      </View>
+
+      <View style={styles.inputRow}>
+        <ThemedText style={styles.label}>Airflow (CFM)</ThemedText>
+        <ThemedInput
+          value={getDisplayValue(data.airflow)}
+          onChangeText={(value) => handleChange('airflow', value)}
+          keyboardType="numeric"
+          style={styles.input}
+        />
+      </View>
+
+      <View style={styles.inputRow}>
+        <ThemedText style={styles.label}>Power Consumption (kW)</ThemedText>
+        <ThemedInput
+          value={getDisplayValue(data.powerConsumption)}
+          onChangeText={(value) => handleChange('powerConsumption', value)}
+          keyboardType="numeric"
+          style={styles.input}
+        />
+      </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -139,23 +90,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
   },
-  sensorGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+  inputRow: {
+    marginBottom: 12,
   },
-  sensorItem: {
-    width: '48%',
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+  label: {
+    marginBottom: 4,
   },
   input: {
-    flex: 1,
-    marginLeft: 8,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    paddingHorizontal: 8,
   },
-  errorText: {
+  error: {
     color: 'red',
-    marginTop: 8,
+    marginBottom: 8,
   },
 }); 

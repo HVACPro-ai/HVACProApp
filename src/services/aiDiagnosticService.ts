@@ -4,7 +4,9 @@ import type {
   AIAnalysisResult,
   DiagnosticContext,
   SensorData,
-  RecommendedPart
+  RecommendedPart,
+  DiagnosticData,
+  DiagnosticResponse
 } from '../types/index';
 import { OpenAIService } from './openAIService';
 import { AILearningService } from './aiLearningService';
@@ -686,6 +688,28 @@ export class AIDiagnosticService {
     } catch (error) {
       console.error('Error in analyzeDiagnostic:', error);
       throw new Error('Failed to analyze diagnostic data');
+    }
+  }
+
+  static async analyzeDiagnostic(data: DiagnosticData): Promise<DiagnosticResponse> {
+    try {
+      // Implement your API call here
+      const response = await fetch('/api/diagnostic/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze diagnostic data');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error analyzing diagnostic:', error);
+      throw error;
     }
   }
 }

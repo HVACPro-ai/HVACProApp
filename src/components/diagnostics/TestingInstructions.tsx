@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Image, ScrollView } from 'react-native';
-import { ThemedText } from '../ThemedText';
+import { ThemedText } from '../ThemedComponents';
 import { Ionicons } from '@expo/vector-icons';
 import type { TestingInstruction } from '../../types';
 import { ThemedButton } from '../ThemedButton';
@@ -10,53 +10,38 @@ interface Props {
   onComplete?: (stepIndex: number) => void;
 }
 
-export function TestingInstructions({ instructions, onComplete }: Props) {
+export const TestingInstructions: React.FC<Props> = ({ instructions, onComplete }) => {
   return (
     <ScrollView style={styles.container}>
+      <ThemedText style={styles.title}>Testing Instructions</ThemedText>
       {instructions.map((instruction, index) => (
-        <View key={index} style={[
-          styles.instructionItem,
-          instruction.completed && styles.completedInstruction
-        ]}>
-          <View style={styles.stepHeader}>
-            <ThemedText style={styles.stepNumber}>Step {instruction.step}</ThemedText>
-            {instruction.completed && (
-              <Ionicons name="checkmark-circle" size={24} color="#4CAF50" style={styles.completedIcon} />
-            )}
-          </View>
-          
-          <ThemedText style={styles.description}>{instruction.description}</ThemedText>
-          
-          {instruction.imageUrl && (
-            <Image
-              source={{ uri: instruction.imageUrl }}
-              style={styles.instructionImage}
-              resizeMode="contain"
-            />
-          )}
-          
-          {instruction.warningNote && (
-            <View style={styles.warningContainer}>
-              <Ionicons name="warning" size={24} color="#FFA500" />
-              <ThemedText style={styles.warningText}>{instruction.warningNote}</ThemedText>
-            </View>
-          )}
-
-          {onComplete && !instruction.completed && (
-            <ThemedButton
-              title="Mark as Complete"
-              onPress={() => onComplete(index)}
-              style={styles.completeButton}
-            />
-          )}
+        <View key={index} style={styles.instruction}>
+          <ThemedText style={styles.stepNumber}>{index + 1}.</ThemedText>
+          <ThemedText style={styles.stepText}>{instruction.text}</ThemedText>
         </View>
       ))}
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
+    padding: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  instruction: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  stepNumber: {
+    width: 24,
+    fontWeight: 'bold',
+  },
+  stepText: {
     flex: 1,
   },
   instructionItem: {
@@ -68,11 +53,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
-  },
-  stepNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginRight: 8,
   },
   description: {
     fontSize: 16,

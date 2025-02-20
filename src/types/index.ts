@@ -2,12 +2,12 @@ import { InventoryStatus } from '../constants/inventory';
 
 // Equipment Types
 export interface EquipmentTypeInfo {
-  id: string;
-  name: string;
+  type: string;
+  manufacturer: string;
+  model: string;
+  serialNumber: string;
   category: string;
-  manufacturer?: string;
-  model?: string;
-  serialNumber?: string;
+  brand: string;
 }
 
 // Re-export the InventoryStatus to avoid type conflicts
@@ -59,6 +59,9 @@ export interface DiagnosticData {
 export interface DiagnosticHistoryItem extends DiagnosticData {
   id: string;
   timestamp: number;
+  confirmedIssue: string;
+  equipmentType: EquipmentTypeInfo;
+  resolution?: string;
 }
 
 // Analysis Types
@@ -88,8 +91,8 @@ export interface ImageAnalysis {
 // Supporting Types
 export interface TestingInstruction {
   id: string;
-  text: string;
-  imageUrl?: string;
+  step: string;
+  description: string;
 }
 
 export interface RecommendedPart {
@@ -104,7 +107,7 @@ export interface RecommendedPart {
 
 export interface AIQuestion {
   id: string;
-  text: string;
+  question: string;
   options?: string[];
 }
 
@@ -167,4 +170,30 @@ export interface SystemSettings {
       endTime: string;
     };
   };
+}
+
+export type OrderPriority = 'standard' | 'express' | 'urgent';
+
+export interface OrderDetails {
+  partNumber: string;
+  quantity: number;
+  priority: OrderPriority;
+  notes?: string;
+}
+
+export interface AIAnalysisResult {
+  diagnosis: string;
+  confidence: number;
+  suggestions: string[];
+  recommendations: string[];
+  partSuggestions: string[];
+  optimizations: string[];
+}
+
+export interface DiagnosticResponse {
+  diagnosis: string;
+  confidence: number;
+  suggestions: string[];
+  recommendedActions: string[];
+  suggestedParts: string[];
 } 
