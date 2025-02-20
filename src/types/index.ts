@@ -1,3 +1,7 @@
+export * from './diagnosticState';
+export * from './aiTypes';
+export * from './equipment';
+
 export interface AIAnalysisResult {
   issue: string;
   confidence: number;
