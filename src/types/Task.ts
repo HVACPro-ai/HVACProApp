@@ -5,7 +5,7 @@ export interface Task {
   dueDate: string;
   dueTime: string;
   priority: 'high' | 'medium' | 'low';
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'pending' | 'in-progress' | 'completed';
   customerId: string;
   equipmentId: string;
   assignedTo?: string;
